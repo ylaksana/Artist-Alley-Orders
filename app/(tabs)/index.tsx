@@ -27,7 +27,7 @@ export default function Index() {
     id: number;
     name:string;
     email:string;
-    count?: number;
+    count: number;
   }
 
 
@@ -103,14 +103,27 @@ export default function Index() {
     console.log("Current selected products:", selectedProducts);
   }, [selectedProducts]);
 
-  const addProductToList = (product: ProductType) => {
-    if (selectedProducts.some(item => item.name === product.name)) {
-      setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
+  const addProductToList = (product: ProductType, isAdding: Boolean) => {
+    if (!isAdding) {
+
+      if (product.count === 0) {
+        setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
+      }
+
       setSum(sum - parseInt(product.email));
+      product.count--;
+
     } else {
-      setSelectedProducts([...selectedProducts, product]);
+      product.count++;
+      if(product.count === 1) {
+
+        setSelectedProducts([...selectedProducts, product]);
+      }
+
       setSum(sum + parseInt(product.email));
+
     }
+    console.log(selectedProducts);
   };
 
   return (
@@ -121,18 +134,27 @@ export default function Index() {
         {data.map((product) => (
             <Pressable 
               key={product.id}
-              onPress={() => addProductToList(product)}
               style={[
                 styles.cell, 
                 selectedProducts.some(item => item.name === product.name) &&
-                { backgroundColor: '#525b66' }
+                { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
               ]}>
               <View style={styles.productCounterContainer}>
-                <Pressable style={styles.productCountButton}>
+                <Pressable 
+                style={styles.productCountButton}
+                  onPress={() => {
+                    if (product.count > 0) {
+                      addProductToList(product, false);
+                    }
+                  }}>
                   <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
                 </Pressable>
                 <Text style={styles.productCounter}>{product.count}</Text>
-                <Pressable style={styles.productCountButton}>
+                <Pressable 
+                  style={styles.productCountButton}
+                  onPress={() => {
+                    addProductToList(product, true);
+                  }}>
                   <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
                 </Pressable>
               </View>
