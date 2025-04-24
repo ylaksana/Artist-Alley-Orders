@@ -14,6 +14,7 @@ export default function RootLayout() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         email TEXT
+        count INTEGER
       );`
     );
   
