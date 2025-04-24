@@ -1,6 +1,5 @@
-import {Modal, View, Text, Pressable, StyleSheet} from 'react-native';
+import {Modal, View, Text, Pressable, StyleSheet, ScrollView} from 'react-native';
 import { PropsWithChildren } from 'react';
-import { useState } from 'react';
 
 import { OrderType } from '@/app/(tabs)/order-history';
 
@@ -10,8 +9,7 @@ type Props = PropsWithChildren<{
   onClose: () => void;
 }>;
 
-export default function OrderModal({isVisible, order, onClose} : Props) {
-
+export default function OrderModal({isVisible, order, onClose} : Props) { 
     return (
         <Modal
             animationType="slide"
@@ -19,11 +17,15 @@ export default function OrderModal({isVisible, order, onClose} : Props) {
             visible={isVisible}>
             <View style={styles.orderModalView}>
             <View style={styles.orderModalCard}>
+                <ScrollView style={styles.orderListContainer}>
+                    {order?.list.map((item, index) => (
+                        <Text key={index} style={{color: '#ffd33d'}}>{item.count}x {item.product}</Text>
+                    ))}
+                </ScrollView>
                 <Text style={styles.orderModalText}>
                   {`${order?.type}\n 
                     ${order?.name}\n
                     ${order?.email}\n
-                    ${order?.list}\n
                     ${order?.price}`
                   }
                 </Text>
@@ -77,4 +79,11 @@ const styles = StyleSheet.create({
         marginTop: 10,
         width: '80%',
       },
+      orderListContainer:{
+        borderRadius: 10,
+        borderColor: '#ffd33d',
+        backgroundColor: '#25292e',
+        padding: 10,
+        marginBottom: 10,
+      }
 });

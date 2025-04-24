@@ -53,6 +53,7 @@ export default function Index() {
 
   const storeCustomerInformation = async() =>{
     try{
+      setOrderType("Convention Sale");
       const result = await database.runAsync(
         "INSERT INTO orders (type, name, email, price) VALUES(?, ?, ?, ?)",
         [
@@ -67,16 +68,21 @@ export default function Index() {
       
       selectedProducts.forEach((product) => {
         database.runAsync(
-          "INSERT INTO sold_products (user_id, product) VALUES(?, ?)",
+          "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?",
           [
             orderId,
-            product.name
+            product.name,
+            product.count
           ]
         );
       });
 
       setName("");
       setSum(0);
+      for (let i = 0; i < selectedProducts.length; i++) {
+        const product = selectedProducts[i];
+        product.count = 0;
+      }
       setSelectedProducts([]);
       setWarningModalVisible(false);
     } catch (error) {
@@ -90,7 +96,7 @@ export default function Index() {
   const storeOrder = () => {
     try{
       storeCustomerInformation();
-      alert("Order submitted successfully!");
+      alert("Order saved successfully!");
       setWarningModalVisible(false);
     }
     catch (error) {
@@ -105,13 +111,12 @@ export default function Index() {
 
   const addProductToList = (product: ProductType, isAdding: Boolean) => {
     if (!isAdding) {
-
-      if (product.count === 0) {
+      product.count--;
+      if (product.count < 1) {
         setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
       }
 
       setSum(sum - parseInt(product.email));
-      product.count--;
 
     } else {
       product.count++;
