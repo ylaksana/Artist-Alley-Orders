@@ -66,7 +66,6 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
         }
     }
 
-
     const createProduct = () =>{
         try{
           database.runAsync(

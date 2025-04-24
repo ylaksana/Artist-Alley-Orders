@@ -53,31 +53,37 @@ export default function Index() {
 
   const storeCustomerInformation = async() =>{
     try{
-      setOrderType("Convention Sale");
       const result = await database.runAsync(
         "INSERT INTO orders (type, name, email, price) VALUES(?, ?, ?, ?)",
         [
           orderType,
-          name,
-          email,
+          'N/A',
+          'N/A',
           sum
         ]
       );
 
       const orderId = result.lastInsertRowId;
       
-      selectedProducts.forEach((product) => {
-        database.runAsync(
-          "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?",
-          [
-            orderId,
-            product.name,
-            product.count
-          ]
-        );
-      });
-
-      setName("");
+      for (const product of selectedProducts) {
+        if (product.count > 0) {
+          try {
+            // Fixed SQL query with closing parenthesis
+            await database.runAsync(
+              "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
+              [
+                orderId,
+                product.name,
+                product.count
+              ]
+            );
+            console.log("Saved product:", product.name, "with count:", product.count);
+          } catch (productError) {
+            console.error("Error saving product:", productError, product);
+          }
+        }
+      }
+      
       setSum(0);
       for (let i = 0; i < selectedProducts.length; i++) {
         const product = selectedProducts[i];
@@ -184,10 +190,8 @@ export default function Index() {
         isVisible={warningModalVisible}
         onClose={() => setWarningModalVisible(false)}
         onSuccess={() => {
-          setName('N/A'),
-          setOrderType('Convention Sale'),
-          setEmail('N/A'),
-          storeOrder()                
+          setOrderType('Convention Sale')
+          storeOrder()      
         }}
       />
       

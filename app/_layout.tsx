@@ -34,7 +34,7 @@ export default function RootLayout() {
         user_id INTEGER,
         product TEXT,
         count INTEGER,
-        FOREIGN KEY (id) REFERENCES orders(id)
+        FOREIGN KEY (user_id) REFERENCES orders(id)
       );`
     );
     

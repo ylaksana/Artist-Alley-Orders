@@ -7,9 +7,11 @@ type Props = PropsWithChildren<{
   isVisible: boolean;
   order: OrderType | null;
   onClose: () => void;
+  onDelete: () => void;
 }>;
 
-export default function OrderModal({isVisible, order, onClose} : Props) { 
+export default function OrderModal({isVisible, order, onClose, onDelete} : Props) { 
+    
     return (
         <Modal
             animationType="slide"
@@ -23,18 +25,24 @@ export default function OrderModal({isVisible, order, onClose} : Props) {
                     ))}
                 </ScrollView>
                 <Text style={styles.orderModalText}>
-                  {`${order?.type}\n 
-                    ${order?.name}\n
-                    ${order?.email}\n
-                    ${order?.price}`
-                  }
+                  {`Order Type: ${order?.type}\n`}
+                  {`Name: ${order?.name}\n`}
+                  {`Email: ${order?.email}\n`}
+                  {`Price: $${order?.price}`} 
                 </Text>
+                
+                <Pressable
+                style={styles.orderModalButton}
+                onPress={onDelete}>
+                <Text style={{color: '#000'}}>Delete</Text>
+                </Pressable>
 
                 <Pressable
                 style={styles.orderModalButton}
                 onPress={onClose}>
                 <Text style={{color: '#000'}}>Close</Text>
                 </Pressable>
+                
 
             </View>
             </View>
