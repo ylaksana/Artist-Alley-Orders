@@ -1,74 +1,220 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput } from "react-native";
+import {useState, useEffect, useCallback} from 'react';
+import { Stack, useFocusEffect, router } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Button from "@/components/Button"; // Adjust the path as necessary
+import WarningModal from "@/components/WarningModal"; // Adjust the path as necessary
+import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 
-export default function HomeScreen() {
+export default function Index() {
+  const [data, setData] = useState<ProductType[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
+  const [warningModalVisible, setWarningModalVisible] = useState(false);
+  const [addProductModalVisible, setAddProductModalVisible] = useState(false);
+  const [productId, setProductId] = useState<number | null>(null);
+
+  
+  const [name, setName] = useState("");
+  const [orderType, setOrderType] = useState("");
+  const [email, setEmail] = useState("");
+
+  const database = useSQLiteContext();
+  const [sum, setSum] = useState(0);
+
+  type ProductType = {
+    id: number;
+    name:string;
+    email:string;
+  }
+
+  const loadData = async () => {
+    const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
+    setData(result);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }
+    , [])
+  );
+
+  const headerRight = () => {
+    return(
+      <Pressable onPress={() => setAddProductModalVisible(true)} style={{padding: 10}}>
+        <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
+      </Pressable>
+    )
+  }
+
+  const storeCustomerInformation = async() =>{
+    try{
+      const result = await database.runAsync(
+        "INSERT INTO orders (type, name, email, price) VALUES(?, ?, ?, ?)",
+        [
+          orderType,
+          name,
+          email,
+          sum
+        ]
+      );
+
+      const orderId = result.lastInsertRowId;
+      
+      selectedProducts.forEach((product) => {
+        database.runAsync(
+          "INSERT INTO sold_products (user_id, product) VALUES(?, ?)",
+          [
+            orderId,
+            product.name
+          ]
+        );
+      });
+
+      setName("");
+      setSum(0);
+      setSelectedProducts([]);
+      setWarningModalVisible(false);
+    } catch (error) {
+      const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
+      alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+      console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+    } 
+  }
+
+
+  const storeOrder = () => {
+    try{
+      storeCustomerInformation();
+      alert("Order submitted successfully!");
+      setWarningModalVisible(false);
+    }
+    catch (error) {
+      alert(`Error saving order: ${error}`);
+    }
+    
+  }
+  
+  useEffect(() => {
+    console.log("Current selected products:", selectedProducts);
+  }, [selectedProducts]);
+
+  const addProductToList = (product: ProductType) => {
+    if (selectedProducts.some(item => item.name === product.name)) {
+      setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
+      setSum(sum - parseInt(product.email));
+    } else {
+      setSelectedProducts([...selectedProducts, product]);
+      setSum(sum + parseInt(product.email));
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style= {styles.container}>
+      <Stack.Screen options={{headerRight}}/>
+      <ScrollView
+        style={styles.scrollView}>
+        {data.map((product) => (
+            <Pressable 
+              key={product.id}
+              onPress={() => addProductToList(product)}
+              style={[
+                styles.cell, 
+                selectedProducts.some(item => item.name === product.name) && { backgroundColor: '#525b66' }
+              ]}>
+              <Text style={styles.text}>{product.name}, ${product.email}</Text>
+              <Pressable
+                onPress={() => {
+                  setProductId(product.id);
+                  setAddProductModalVisible(true);
+                }}>
+                  <Text style={styles.editButton}>Edit</Text>
+              </Pressable>
+            </Pressable>
+        ))}
+        
+      </ScrollView>
+      {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
+      <View style={styles.buttomContainer}>
+        <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+      </View>
+
+      <WarningModal
+        isVisible={warningModalVisible}
+        onClose={() => setWarningModalVisible(false)}
+        onSuccess={() => {
+          setName('N/A'),
+          setOrderType('Convention Sale'),
+          setEmail('N/A'),
+          storeOrder()                
+        }}
+      />
+      
+      <AddProductModal
+        isVisible={addProductModalVisible}
+        onClose={() => {
+          setAddProductModalVisible(false),
+          setProductId(null);
+        }}
+        onSuccess={() => loadData()}
+        productId={productId}
+        database={database}/>
+      
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#25292e",
+
+  },
+  buttomContainer:{
+    marginTop: 20,
+    width: "80%",
+    alignItems: "center",
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  scrollView:{
+    backgroundColor: "#25292e",
+    width: "100%",
+    flex: 1,
+  },
+  cell: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    padding: 15,
+    marginBottom: 10,
+    backgroundColor: '#25292e',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#525961', // Change this color to modify the border color
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  editButton: {
+    color: '#25292e',
+    backgroundColor: '#ffd33d',
+    borderRadius: 5,
+    padding: 5,
+    fontSize: 16,
+    marginTop: 5,
+    fontWeight: 'bold',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  sumCounter:{
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
+    textAlign: 'center',
+    padding: 10,
+  }
 });

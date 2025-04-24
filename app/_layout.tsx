@@ -1,39 +1,58 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import {LogBox} from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+LogBox.ignoreAllLogs(true);
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const createDBIfNeeded = async (db:SQLiteDatabase) => {
+    // This function can be used to initialize the database if needed
+    console.log("Checking if database needs to be created...");
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT
+      );`
+    );
+  
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          type TEXT,
+          name TEXT,
+          email TEXT,
+          price REAL
+        );`
+      );
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS sold_products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        product TEXT,
+        count INTEGER,
+        FOREIGN KEY (id) REFERENCES orders(id)
+      );`
+    );
+    
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
+      <>
+      <StatusBar style="light"/>
+        <Stack>
+          <Stack.Screen 
+            name="(tabs)" 
+            options={{ 
+              headerShown: false,
+            }} 
+          />
+
+        </Stack>
+      </>
+    </SQLiteProvider>
   );
 }
