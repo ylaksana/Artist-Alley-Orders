@@ -15,6 +15,7 @@ type Props = PropsWithChildren<{
 export default function WarningModal({isVisible, onSuccess, onClose, productId, database} : Props) {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
+    const [count, setCount] = useState(0);
     const [editMode, setEditMode] = useState(false);
 
     useEffect(() => {
@@ -69,10 +70,11 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const createProduct = () =>{
         try{
           database.runAsync(
-            "INSERT INTO users (name, email) VALUES(?, ?)",
+            "INSERT INTO users (name, email, count) VALUES(?, ?, ?)",
             [
               name,
               price,
+              count
             ]
           );
           alert("Added new product!");

@@ -27,7 +27,9 @@ export default function Index() {
     id: number;
     name:string;
     email:string;
+    count?: number;
   }
+
 
   const loadData = async () => {
     const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
@@ -122,8 +124,18 @@ export default function Index() {
               onPress={() => addProductToList(product)}
               style={[
                 styles.cell, 
-                selectedProducts.some(item => item.name === product.name) && { backgroundColor: '#525b66' }
+                selectedProducts.some(item => item.name === product.name) &&
+                { backgroundColor: '#525b66' }
               ]}>
+              <View style={styles.productCounterContainer}>
+                <Pressable style={styles.productCountButton}>
+                  <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
+                </Pressable>
+                <Text style={styles.productCounter}>{product.count}</Text>
+                <Pressable style={styles.productCountButton}>
+                  <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
+                </Pressable>
+              </View>
               <Text style={styles.text}>{product.name}, ${product.email}</Text>
               <Pressable
                 onPress={() => {
@@ -192,6 +204,7 @@ const styles = StyleSheet.create({
   cell: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 15,
     marginBottom: 10,
     backgroundColor: '#25292e',
@@ -216,5 +229,24 @@ const styles = StyleSheet.create({
     width: '100%',
     textAlign: 'center',
     padding: 10,
+  },
+  productCounterContainer:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  productCountButton:{
+    marginHorizontal: 5,
+  },
+  productCounter:{
+    fontSize: 20,
+    fontWeight: 'bold',
+    borderColor : '#ffd33d',
+    borderRadius: 5,
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    textAlign: 'center',
+    width: 40,
+    padding: 5,
   }
 });
