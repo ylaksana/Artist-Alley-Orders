@@ -10,6 +10,7 @@ export type OrderType ={
     type: string;
     name: string;
     email: string;
+    phone: string;
     list: ProductItem[];
     price: string;
 }
@@ -35,6 +36,17 @@ export default function OrderHistoryScreen() {
         , [])
     );
     
+    // const updateOrderTable = async () => {
+    //     try {
+    //         await database.runAsync(
+    //             `ALTER TABLE orders
+    //             ADD COLUMN phone REAL DEFAULT 0`
+    //         );
+    //         console.log("Successfully added column phone to orders table.");
+    //     } catch (error) {
+    //         console.error("Error adding phone to table:", error);
+    //     }
+    // }
 
     const loadData = async () => {
         const result = await database.getAllAsync<OrderType>(`SELECT * FROM orders`);
@@ -79,18 +91,19 @@ export default function OrderHistoryScreen() {
 
     return (
         <View style={styles.container}>
-            <ScrollView 
+            {data.length > 0 && 
+            (<ScrollView 
                 style={styles.scrollView}
-            >
-            {data.map((order) =>(
-                <View key={order.id} style={styles.cell}>
-                    <Pressable onPress={() => openOrder(order)}>
-                        <Text style={styles.text}>Type: {order.type}, Price: {order.price}</Text>
-                    </Pressable>
-                </View>
+                >
+                {data.map((order) =>(
+                    <View key={order.id} style={styles.cell}>
+                        <Pressable onPress={() => openOrder(order)}>
+                            <Text style={styles.text}>Type: {order.type}, Price: ${order.price}</Text>
+                        </Pressable>
+                    </View>
                 
-            ))}
-            </ScrollView>
+                ))}
+            </ScrollView>)}
             {selectedOrder && (
                 <OrderModal
                     isVisible={orderModalVisible}
@@ -103,6 +116,7 @@ export default function OrderHistoryScreen() {
                 />
             )}
             
+            {data.length === 0 && (<Text style={styles.text}>No Sales Yet!</Text>)}
         </View>
         
     );

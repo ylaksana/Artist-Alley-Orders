@@ -33,7 +33,27 @@ export default function Index() {
 
   const loadData = async () => {
     const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
-    setData(result);
+  
+  // Merge with existing selectedProducts counts
+  const updatedResult = result.map(product => {
+    // Find this product in selectedProducts (if it exists)
+    const selectedProduct = selectedProducts.find(item => item.id === product.id);
+    
+    if (selectedProduct) {
+      // If it exists in selectedProducts, use its count
+      return {
+        ...product,
+        count: selectedProduct.count
+      };
+    }
+    
+    // Otherwise return the product as is (with count 0 or whatever default)
+    return product;
+  });
+  
+  // Update the data state with the merged information
+  setData(updatedResult);
+
   };
 
   useFocusEffect(
@@ -54,12 +74,13 @@ export default function Index() {
   const storeCustomerInformation = async() =>{
     try{
       const result = await database.runAsync(
-        "INSERT INTO orders (type, name, email, price) VALUES(?, ?, ?, ?)",
+        "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
         [
-          orderType,
+          "Convention Sale",
           'N/A',
           'N/A',
-          sum
+          sum,
+          'N/A'
         ]
       );
 
@@ -190,7 +211,6 @@ export default function Index() {
         isVisible={warningModalVisible}
         onClose={() => setWarningModalVisible(false)}
         onSuccess={() => {
-          setOrderType('Convention Sale')
           storeOrder()      
         }}
       />
@@ -223,7 +243,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   text: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },

@@ -19,31 +19,34 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
             visible={isVisible}>
             <View style={styles.orderModalView}>
             <View style={styles.orderModalCard}>
-                <ScrollView style={styles.orderListContainer}>
-                    {order?.list.map((item, index) => (
-                        <Text key={index} style={{color: '#ffd33d'}}>{item.count}x {item.product}</Text>
-                    ))}
-                </ScrollView>
-                <Text style={styles.orderModalText}>
-                  {`Order Type: ${order?.type}\n`}
+              <Text style={styles.orderModalText}>
+                  
                   {`Name: ${order?.name}\n`}
                   {`Email: ${order?.email}\n`}
+                  {`Phone: ${order?.phone}\n`}
+                  {`Order Type: ${order?.type}\n`}
                   {`Price: $${order?.price}`} 
-                </Text>
-                
-                <Pressable
-                style={styles.orderModalButton}
-                onPress={onDelete}>
-                <Text style={{color: '#000'}}>Delete</Text>
-                </Pressable>
+                  
+              </Text>
 
-                <Pressable
-                style={styles.orderModalButton}
-                onPress={onClose}>
-                <Text style={{color: '#000'}}>Close</Text>
-                </Pressable>
+              <ScrollView style={styles.orderListContainer}>
+                  {order?.list.map((item, index) => (
+                      <Text key={index} style={styles.orderText}>{item.count}x {item.product}</Text>
+                  ))}
+              </ScrollView>
                 
+              <Pressable
+              style={styles.orderModalButton}
+              onPress={onDelete}>
+              <Text style={{color: '#000'}}>Delete</Text>
+              </Pressable>
 
+              <Pressable
+              style={styles.orderModalButton}
+              onPress={onClose}>
+              <Text style={{color: '#000'}}>Close</Text>
+              </Pressable>
+              
             </View>
             </View>
     </Modal>
@@ -79,6 +82,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#ffd33d',
       },
+      orderText:{
+        marginBottom: 15,
+        textAlign: 'center',
+        fontSize: 15,
+        color: '#ffd33d',
+      },
       orderModalButton: {
         backgroundColor: '#ffd33d',
         borderRadius: 5,
@@ -89,9 +98,12 @@ const styles = StyleSheet.create({
       },
       orderListContainer:{
         borderRadius: 10,
+        borderWidth: 3,
         borderColor: '#ffd33d',
-        backgroundColor: '#25292e',
-        padding: 10,
+        backgroundColor: '#1e2124',
         marginBottom: 10,
+        padding: 10,
+        width: '100%',
+        maxHeight: 200,
       }
 });
