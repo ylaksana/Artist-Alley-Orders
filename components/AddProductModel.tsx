@@ -1,7 +1,8 @@
-import {Modal, View, Text, Pressable, StyleSheet, TextInput} from 'react-native';
+import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'react-native';
 import { PropsWithChildren } from 'react';
 import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
+import { flattenOpenOptions } from 'expo-sqlite/build/NativeDatabase';
 
 
 type Props = PropsWithChildren<{
@@ -17,6 +18,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const [price, setPrice] = useState("");
     const [count, setCount] = useState(0);
     const [editMode, setEditMode] = useState(false);
+    const [extraOptions, setExtraOptions] = useState(false);
 
     useEffect(() => {
         if(!isVisible) {
@@ -110,28 +112,58 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
           <View style={styles.productModalView}>
             <View style={styles.productModalCard}>
               <Text style={styles.productModalText}>Add Product</Text>
-              <TextInput style={[styles.productNameInput, {color: '#fff'}]} placeholder="Name" placeholderTextColor={'#fff'} value={name} onChangeText={(text)=>setName(text)}></TextInput>
-              <TextInput style={styles.productNameInput} placeholder="Price" keyboardType="numeric" placeholderTextColor={'#fff'} value={price} onChangeText={(text)=>setPrice(text)}></TextInput>
-              <View style={styles.productOptions}>
-                <Pressable
-                  style={styles.productModalButton}
-                  onPress={async () => {editMode ?  handleUpdate() : createProduct()}}>
-                  <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
-                </Pressable>
-                {editMode && <Pressable
-                  style={styles.productModalButton}
-                  onPress={async () => deleteProduct()}>
-                  <Text style={{color: '#000'}}>Delete</Text>
-                </Pressable>}
-                <Pressable
-                  style={styles.productModalButton}
-                  onPress={() => {
-                    onClose();
-                  }}>
-                  <Text style={{color: '#000'}}>Cancel</Text>
-                </Pressable>
-              </View>
+              
+              
+              {!extraOptions && (
+                  <View style={styles.productOptions}>
+                  <TextInput style={[styles.productNameInput, {color: '#fff'}]} placeholder="Name" placeholderTextColor={'#fff'} value={name} onChangeText={(text)=>setName(text)}></TextInput>
+                  <TextInput style={styles.productNameInput} placeholder="Price" keyboardType="numeric" placeholderTextColor={'#fff'} value={price} onChangeText={(text)=>setPrice(text)}></TextInput>
+                   <Pressable
+                    style={styles.productModalButton}
+                    onPress={() => {
+                      setExtraOptions(!extraOptions);
+                    }}>
+                    <Text style={{color: '#000'}}>Add Extra Options</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.productModalButton}
+                    onPress={async () => {editMode ?  handleUpdate() : createProduct()}}>
+                    <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
+                  </Pressable>
+                  {editMode && <Pressable
+                    style={styles.productModalButton}
+                    onPress={async () => deleteProduct()}>
+                    <Text style={{color: '#000'}}>Delete</Text>
+                  </Pressable>}
+                  <Pressable
+                    style={styles.productModalButton}
+                    onPress={() => {
+                      onClose();
+                    }}>
+                    <Text style={{color: '#000'}}>Cancel</Text>
+                  </Pressable>
+                </View>
+              )}
+              
+              {extraOptions && (
+                <View style={styles.productOptions}>
+                  <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={price} onChangeText={(text)=>setPrice(text)}></TextInput>
+                  <ScrollView style={styles.productModalExtraOptionsList}>
+                  </ScrollView>
+                 <Pressable
+                    style={styles.productModalButton}
+                    onPress={async () => {
+                      setExtraOptions(false);
+                    }}>
+                    <Text style={{color: '#000'}}>Cancel</Text>
+                  </Pressable>
+                  
+                </View>
+              )}
+            
             </View>
+
+            
           </View>
         </Modal>
     )
@@ -190,5 +222,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
         width: '80%',
+      },
+      productModalExtraOptionsText:{
+        fontSize: 16,
+        color: '#fff',
+        marginTop: 10,
+      },
+      productModalExtraOptionsList:{
+        backgroundColor: '#25292e',
+        borderRadius: 5,
+        borderWidth: 3,
+        borderColor: '#ffd33d',
+        padding: 10,
+        marginTop: 10,
+        width: '100%',
+        height: 200,
       },
 });

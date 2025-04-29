@@ -37,6 +37,15 @@ export default function RootLayout() {
         FOREIGN KEY (user_id) REFERENCES orders(id)
       );`
     );
+
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS extra_options (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        option TEXT,
+        FOREIGN KEY (user_id) REFERENCES orders(id)
+      );`
+    );
     
   };
 
