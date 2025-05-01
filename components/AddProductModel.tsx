@@ -3,6 +3,8 @@ import { PropsWithChildren } from 'react';
 import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { flattenOpenOptions } from 'expo-sqlite/build/NativeDatabase';
+import { useFocusEffect } from 'expo-router';
+import { loadOptions } from '@babel/core';
 
 
 type Props = PropsWithChildren<{
@@ -12,6 +14,7 @@ type Props = PropsWithChildren<{
     productId?: number | null;
     database: SQLiteDatabase;
   }>;
+  
 
 export default function WarningModal({isVisible, onSuccess, onClose, productId, database} : Props) {
     const [name, setName] = useState("");
@@ -19,6 +22,9 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const [count, setCount] = useState(0);
     const [editMode, setEditMode] = useState(false);
     const [extraOptions, setExtraOptions] = useState(false);
+    const [optionsData, setOptionsData] = useState<string[]>([]);
+    const [optionText, setOptionText] = useState("");
+    const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
     useEffect(() => {
         if(!isVisible) {
@@ -36,12 +42,18 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
         }
     }, [isVisible, productId]);
 
+    useFocusEffect(() => {
+      
+    })
+
+
     const loadData = async () =>{
         if(!productId) return;
-
+      try{
+        //fetch product data
         const result = await database.getFirstAsync<{
-            name:string;
-            email:string;
+          name:string;
+          email:string;
         }>
         (`SELECT name, email FROM users WHERE id = ?;`, [productId]);
         if (result) {
@@ -50,6 +62,20 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
         } else {
             console.warn("No result found for the given ID.");
         }
+
+        //fetch options data
+        const options = await database.getAllAsync<{user_id: number, option: string}>(
+          `SELECT * FROM extra_options WHERE user_id=?`, [productId]
+        );
+
+        const optionsList = options.map((item) => item.option);
+        setOptionsData(optionsList);
+        console.log("Options data:", optionsList);
+
+      }
+      catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
 
     const handleUpdate = async () => {
@@ -65,6 +91,40 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
             onClose();
         }catch (error) {
             console.error("Error updating product:", error);
+        }
+    }
+
+    const handleOptionChange = async () => {
+      try{
+        const result = await database.getAllAsync<{user_id: number, option: string}>(`SELECT * FROM extra_options`);
+  
+        const optionList = result.map((item) => item.option);
+  
+        const filteredOptions = optionsData.filter((option) => !optionList.includes(option));
+        const allOptions = [...optionList, ...filteredOptions];
+        setOptionsData(allOptions);
+      }
+      catch (error) {
+        console.error("Error fetching options:", error);
+      }
+    };
+
+    const addOption = async () => {
+        if(!productId) return;
+        try{
+          if (optionExists(optionText)) {
+            alert("Option already exists!");
+            return;
+          }
+          await database.runAsync(
+            `INSERT INTO extra_options (user_id, option) VALUES(?, ?)`,
+            [productId, optionText]
+          );
+          setOptionText("");
+          alert("Added new option!");
+          onSuccess();
+        }catch (error) {
+          console.error("Error adding option:", error);
         }
     }
 
@@ -103,6 +163,47 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
         console.error("Error deleting product:", error);
       }
     }
+
+    const optionExists = (option: string) => {
+      return optionsData.includes(option);
+    }
+
+    const deleteOption = async () => {
+      if(!productId || selectedOptions.length === 0) return;
+
+      const deletedOptions =  [...selectedOptions];
+
+      // Update UI immediately
+      setOptionsData(optionsData.filter(option => !selectedOptions.includes(option)));
+      setSelectedOptions([]);
+      
+      // Then perform database operations in the background
+      try {
+        for (const option of deletedOptions) {
+          await database.runAsync(
+            `DELETE FROM extra_options WHERE user_id = ? AND option = ?`,
+            [productId, option]
+          );
+        }
+        alert("Delete successful!");
+      } catch (error) {
+        console.error("Error deleting option:", error);
+        alert("Error deleting option: " + error);
+        
+        // If there's an error, reload data to ensure UI is in sync with database
+        handleOptionChange();
+  }
+    }
+
+    const handleOptionSelect = (option: string) => {
+      if (selectedOptions.includes(option)) {
+        setSelectedOptions(selectedOptions.filter((item) => item !== option));
+      } else {
+        setSelectedOptions([...selectedOptions, option]);
+      }
+      console.log("Selected options:", selectedOptions);
+    };
+
 
     return(
         <Modal
@@ -147,16 +248,37 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
               
               {extraOptions && (
                 <View style={styles.productOptions}>
-                  <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={price} onChangeText={(text)=>setPrice(text)}></TextInput>
-                  <ScrollView style={styles.productModalExtraOptionsList}>
+                  <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={optionText} onChangeText={(text)=>setOptionText(text)}></TextInput>
+                  <ScrollView style={styles.productModalExtraOptionsList} contentContainerStyle={{ paddingBottom: 30 }}>
+                    {optionsData.map((option, index) => (
+                      <Pressable key={index} onPress={() => handleOptionSelect(option)}>
+                        <Text key={index} style={[styles.productModalExtraOptionsText, 
+                          {backgroundColor: selectedOptions.includes(option) ? '#525b66' : '#25292e'}]}>{option}</Text>
+                      </Pressable>
+                    ))}
                   </ScrollView>
-                 <Pressable
+                {optionText !== '' && (<Pressable
+                  style={styles.productModalButton}
+                  onPress={async () => {
+                    addOption();
+                    handleOptionChange();
+                  }}>
+                <Text style={{color: '#000'}}>Add Option</Text>
+                </Pressable>)}
+                <Pressable
                     style={styles.productModalButton}
                     onPress={async () => {
-                      setExtraOptions(false);
+                      deleteOption();
                     }}>
-                    <Text style={{color: '#000'}}>Cancel</Text>
+                    <Text style={{color: '#000'}}>Delete Option</Text>
                   </Pressable>
+                <Pressable
+                  style={styles.productModalButton}
+                  onPress={async () => {
+                    setExtraOptions(false);
+                  }}>
+                  <Text style={{color: '#000'}}>Cancel</Text>
+                </Pressable>
                   
                 </View>
               )}
@@ -224,6 +346,11 @@ const styles = StyleSheet.create({
         width: '80%',
       },
       productModalExtraOptionsText:{
+        borderWidth: 2,
+        borderRadius: 5,
+        borderColor: '#ffd33d',
+        textAlign: 'center',
+        padding: 5,
         fontSize: 16,
         color: '#fff',
         marginTop: 10,
@@ -234,8 +361,8 @@ const styles = StyleSheet.create({
         borderWidth: 3,
         borderColor: '#ffd33d',
         padding: 10,
-        marginTop: 10,
+        margin: 10,
         width: '100%',
-        height: 200,
+        maxHeight: 200,
       },
 });
