@@ -20,6 +20,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [count, setCount] = useState(0);
+    const [hasOptions, setHasOptions] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [extraOptions, setExtraOptions] = useState(false);
     const [optionsData, setOptionsData] = useState<string[]>([]);
@@ -43,9 +44,30 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     }, [isVisible, productId]);
 
     useFocusEffect(() => {
-      
+      // addColumnToTable();
     })
 
+    // const addColumnToTable = async () => {
+    //     try {
+    //         await database.runAsync(
+    //             `ALTER TABLE users
+    //             ADD COLUMN hasOptions BOOLEAN DEFAULT 0`
+    //         );
+    //         console.log("Successfully added column count to users table.");
+    //     }
+    //     catch (error) {
+    //         console.error("Error adding column to table:", error);
+    //     }
+    //   }
+
+    const optionsExists = async (productId: number) => {
+      const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
+      if (result.length > 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
 
     const loadData = async () =>{
         if(!productId) return;
@@ -82,9 +104,9 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
         if(!productId) return;
         
         try {
-            const response = await database.runAsync(
-                `UPDATE users SET name = ?, email = ? where id = ?`,
-                [name, price, productId]
+            database.runAsync(
+                `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
+                [name, price, hasOptions, productId]
             );
             alert("Product updated!");
             onSuccess();
@@ -131,16 +153,18 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const createProduct = () =>{
         try{
           database.runAsync(
-            "INSERT INTO users (name, email, count) VALUES(?, ?, ?)",
+            "INSERT INTO users (name, email, count, hasOptions) VALUES(?, ?, ?, ?)",
             [
               name,
               price,
-              count
+              count,
+              hasOptions
             ]
           );
           alert("Added new product!");
           setName("");
           setPrice("");
+          setHasOptions(false);
           onClose();
           onSuccess();
         } catch (error) {

@@ -7,6 +7,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Button from "@/components/Button"; // Adjust the path as necessary
 import WarningModal from "@/components/WarningModal"; // Adjust the path as necessary
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
+import OptionsModal from "@/components/OptionsModal";
 
 export default function Index() {
   const [data, setData] = useState<ProductType[]>([]);
@@ -34,8 +35,8 @@ export default function Index() {
   const loadData = async () => {
     const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
   
-  // Merge with existing selectedProducts counts
-  const updatedResult = result.map(product => {
+    // Merge with existing selectedProducts counts
+    const updatedResult = result.map(product => {
     // Find this product in selectedProducts (if it exists)
     const selectedProduct = selectedProducts.find(item => item.id === product.id);
     
@@ -117,6 +118,33 @@ export default function Index() {
       alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
       console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
     } 
+  }
+
+  const optionsExists = async (productId: number) => {
+    const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
+    if (result.length > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  const openOptionsModal = async (productId: number) => {
+    // Check to see if options exist for this product
+    if (await optionsExists(productId) || !(!optionsExists(productId))) {
+      try{
+        const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
+        console.log("Options loaded:", result);
+        // Load the options into the modal
+        // setOptionsData(result);
+      } catch (error) {
+        console.error("Error loading options:", error);
+      }
+    }
+    // If so, load them
+    // If not, double check if the product has options
+
+  
   }
 
 
