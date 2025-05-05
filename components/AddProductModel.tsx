@@ -301,7 +301,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
                   onPress={async () => {
                     setExtraOptions(false);
                   }}>
-                  <Text style={{color: '#000'}}>Cancel</Text>
+                  <Text style={{color: '#000'}}>Back</Text>
                 </Pressable>
                   
                 </View>

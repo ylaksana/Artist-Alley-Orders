@@ -1,28 +1,27 @@
 import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'react-native';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 
 type Props = {
     isVisible: boolean;
+    productId: number | null;
+    name: string;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export default function OptionsModal({isVisible, onClose, onSuccess} : Props) {
+export default function OptionsModal({isVisible, productId, onClose, onSuccess} : Props) {
     const [optionsData, setOptionsData] = useState<any[]>([]);
     const database = useSQLiteContext();
 
-    useFocusEffect
-
-    const optionsExists = async (productId: number) => {
-        const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
-        if (result.length > 0) {
-          return true;
-        } else {
-          return false;
+    useFocusEffect(
+        useCallback(() => {
+          loadOptions();
         }
-      }
+        , [])
+      );
+
 
     const loadOptions = async () => {
         const result = await database.getAllAsync(`SELECT * FROM extra_options`);
@@ -43,7 +42,7 @@ export default function OptionsModal({isVisible, onClose, onSuccess} : Props) {
                     <ScrollView style={styles.scrollView}>
                         {optionsData.map((option, index) => (
                             <Pressable key={index} onPress={() => {}}>
-                                <Text style={styles.textInput}>{option.option}</Text>
+                                <Text style={styles.optionCell}>{option.option}</Text>
                             </Pressable>
                         ))}
                     </ScrollView>
@@ -67,41 +66,53 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 20,
+        margin:20,
+        width:'80%',
+        backgroundColor: '#25292e',
+        borderColor: '#ffd33d',
+        borderWidth: 4,
+        borderRadius: 10,
         padding: 20,
+        shadowColor: '#000',
+        shadowOffset:{
+          width:0,
+          height:2,
+        },
+        justifyContent: 'center',
         alignItems: 'center',
     },
     modalTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
+        margin: 10,
+        color: '#ffd33d',
     },
     scrollView: {
         width: '100%',
         maxHeight: 300,
-    },
-    textInput: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingHorizontal: 10,
         marginBottom: 20,
-        backgroundColor: '#f9f9f9',
+    },
+    optionCell: {
+        borderWidth: 2,
+        borderRadius: 5,
+        borderColor: '#ffd33d',
+        textAlign: 'center',
+        padding: 5,
+        fontSize: 16,
+        color: '#fff',
+        marginTop: 10,
     },
     button: {
         borderRadius: 5,
         padding: 10,
         elevation: 2,
         width: '100%',
+        marginTop: 10,
     },
     buttonClose: {
-        backgroundColor: '#2196F3',
+        backgroundColor: '#ffd33d',
     },
     buttonText: {
-        color: 'white',
         textAlign: 'center',
         fontWeight: 'bold',
     },

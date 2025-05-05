@@ -9,7 +9,12 @@ import WarningModal from "@/components/WarningModal"; // Adjust the path as nece
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 import OptionsModal from "@/components/OptionsModal";
 
-export default function Index() {
+type Props = {
+    isVisible: boolean;
+    onClose: () => void;
+}
+
+export default function SelectProductModal({isVisible, onClose}: Props) {
   const [data, setData] = useState<ProductType[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
   const [warningModalVisible, setWarningModalVisible] = useState(false);
@@ -198,93 +203,101 @@ export default function Index() {
   };
 
   return (
-    <View style= {styles.container}>
-      <Stack.Screen options={{headerRight}}/>
-      <ScrollView
-        style={styles.scrollView}>
-        {data.map((product) => (
-            <Pressable 
-              key={product.id}
-              style={[
-                styles.cell, 
-                selectedProducts.some(item => item.name === product.name) &&
-                { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
-              ]}
-              onPress={async () => {
-                await optionsExists(product.id) ? openOptionsModal(product): addProductToList(product, true);
-              }}>
-              {/* <View style={styles.productCounterContainer}>
-                <Pressable 
-                style={styles.productCountButton}
-                  onPress={() => {
-                    if (product.count > 0) {
-                      addProductToList(product, false);
-                    }
-                  }}>
-                  <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
-                </Pressable>
-                <Text style={styles.productCounter}>{product.count}</Text>
-                <Pressable 
-                  style={styles.productCountButton}
-                  onPress={() => {
-                    openOptionsModal(product);
-                    addProductToList(product, true);
-                  }}>
-                  <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
-                </Pressable>
-              </View> */}
-              <Text style={styles.text}>{product.name}, ${product.email}</Text>
-              <Pressable
-                onPress={() => {
-                  setProductId(product.id);
-                  setAddProductModalVisible(true);
-                }}>
-                  <Text style={styles.editButton}>Edit</Text>
-              </Pressable>
-            </Pressable>
-        ))}
-        
-      </ScrollView>
-      {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
-      <View style={styles.buttomContainer}>
-        <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
-      </View>
+    <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isVisible}
+        onRequestClose={onClose}
+    >
+        <View style= {styles.container}>
+            <Stack.Screen options={{headerRight}}/>
+            <ScrollView
+                style={styles.scrollView}>
+                {data.map((product) => (
+                    <Pressable 
+                    key={product.id}
+                    style={[
+                        styles.cell, 
+                        selectedProducts.some(item => item.name === product.name) &&
+                        { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
+                    ]}
+                    onPress={async () => {
+                        await optionsExists(product.id) ? openOptionsModal(product): addProductToList(product, true);
+                    }}>
+                    {/* <View style={styles.productCounterContainer}>
+                        <Pressable 
+                        style={styles.productCountButton}
+                        onPress={() => {
+                            if (product.count > 0) {
+                            addProductToList(product, false);
+                            }
+                        }}>
+                        <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
+                        </Pressable>
+                        <Text style={styles.productCounter}>{product.count}</Text>
+                        <Pressable 
+                        style={styles.productCountButton}
+                        onPress={() => {
+                            openOptionsModal(product);
+                            addProductToList(product, true);
+                        }}>
+                        <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
+                        </Pressable>
+                    </View> */}
+                    <Text style={styles.text}>{product.name}, ${product.email}</Text>
+                    <Pressable
+                        onPress={() => {
+                        setProductId(product.id);
+                        setAddProductModalVisible(true);
+                        }}>
+                        <Text style={styles.editButton}>Edit</Text>
+                    </Pressable>
+                    </Pressable>
+                ))}
+                
+            </ScrollView>
+            {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
+            <View style={styles.buttomContainer}>
+                <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+            </View>
 
-      <WarningModal
-        isVisible={warningModalVisible}
-        onClose={() => setWarningModalVisible(false)}
-        onSuccess={() => {
-          storeOrder()      
-        }}
-      />
-      
-      <AddProductModal
-        isVisible={addProductModalVisible}
-        onClose={() => {
-          setAddProductModalVisible(false),
-          setProductId(null);
-        }}
-        onSuccess={() => loadData()}
-        productId={productId}
-        database={database}/>
+            <WarningModal
+                isVisible={warningModalVisible}
+                onClose={() => setWarningModalVisible(false)}
+                onSuccess={() => {
+                storeOrder()      
+                }}
+            />
+            
+            <AddProductModal
+                isVisible={addProductModalVisible}
+                onClose={() => {
+                setAddProductModalVisible(false),
+                setProductId(null);
+                }}
+                onSuccess={() => loadData()}
+                productId={productId}
+                database={database}/>
 
-      <OptionsModal
-        isVisible={optionsModalVisible}
-        productId={productId}
-        name={name}
-        onSuccess={() => {
-            setOptionsModalVisible(false);
-            setProductId(null);
-          }
-        }
-        onClose={() => {
-            setOptionsModalVisible(false);
-            setProductId(null);
-          }
-        }
-        />
+            <OptionsModal
+                isVisible={optionsModalVisible}
+                productId={productId}
+                name={name}
+                onSuccess={() => {
+                    setOptionsModalVisible(false);
+                    setProductId(null);
+                }
+                }
+                onClose={() => {
+                    setOptionsModalVisible(false);
+                    setProductId(null);
+                }
+                }
+                />
 
-    </View>
+            </View>
+    </Modal>
+    
   );
 }
 
