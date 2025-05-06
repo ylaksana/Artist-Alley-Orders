@@ -175,6 +175,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
     const deleteProduct = async () => {
       if(!productId) return;
       try{
+        console.log("Deleting product with ID:", productId);
         await database.runAsync(
           `DELETE FROM users WHERE id = ?`,
           [productId]

@@ -8,35 +8,28 @@ import Button from "@/components/Button"; // Adjust the path as necessary
 import WarningModal from "@/components/WarningModal"; // Adjust the path as necessary
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 import OptionsModal from "@/components/OptionsModal";
+import { ProductType, defaultProduct } from "@/app/(tabs)/order-list";
+
 
 type Props = {
     isVisible: boolean;
+    editMode?: boolean;
     onClose: () => void;
+    onSuccess: (product: ProductType) => void;
 }
 
-export default function SelectProductModal({isVisible, onClose}: Props) {
+export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
   const [data, setData] = useState<ProductType[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
   const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
+  const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
 
   
   const [name, setName] = useState("");
-  const [orderType, setOrderType] = useState("");
-  const [email, setEmail] = useState("");
-
   const database = useSQLiteContext();
   const [sum, setSum] = useState(0);
-
-  type ProductType = {
-    id: number;
-    name:string;
-    email:string;
-    count: number;
-    hasOptions: boolean;
-  }
 
 
   const loadData = async () => {
@@ -44,17 +37,7 @@ export default function SelectProductModal({isVisible, onClose}: Props) {
   
     // Merge with existing selectedProducts counts
     const updatedResult = result.map(product => {
-    // Find this product in selectedProducts (if it exists)
-    const selectedProduct = selectedProducts.find(item => item.id === product.id);
-    
-    if (selectedProduct) {
-      // If it exists in selectedProducts, use its count
-      return {
-        ...product,
-        count: selectedProduct.count
-      };
-    }
-    
+
     // Otherwise return the product as is (with count 0 or whatever default)
     return product;
   });
@@ -79,98 +62,6 @@ export default function SelectProductModal({isVisible, onClose}: Props) {
     )
   }
 
-  const storeCustomerInformation = async() =>{
-    try{
-      const result = await database.runAsync(
-        "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
-        [
-          "Convention Sale",
-          'N/A',
-          'N/A',
-          sum,
-          'N/A'
-        ]
-      );
-
-      const orderId = result.lastInsertRowId;
-      
-      for (const product of selectedProducts) {
-        if (product.count > 0) {
-          try {
-            // Fixed SQL query with closing parenthesis
-            await database.runAsync(
-              "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
-              [
-                orderId,
-                product.name,
-                product.count
-              ]
-            );
-            console.log("Saved product:", product.name, "with count:", product.count);
-          } catch (productError) {
-            console.error("Error saving product:", productError, product);
-          }
-        }
-      }
-      
-      setSum(0);
-      for (let i = 0; i < selectedProducts.length; i++) {
-        const product = selectedProducts[i];
-        product.count = 0;
-      }
-      setSelectedProducts([]);
-      setWarningModalVisible(false);
-    } catch (error) {
-      const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
-      alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-      console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-    } 
-  }
-
-  const optionsExists = async (productId: number) => {
-    const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
-    if (result.length > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  const openOptionsModal = async (product: ProductType) => {
-    // Check to see if options exist for this product
-    if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
-      setName(product.name);
-      setProductId(product.id);
-      setOptionsModalVisible(true);
-    }
-  }
-
-  const closeOptionsModal = (options: string) => {
-    // add options to the product name
-    setName(name + " " + options);
-    // last step
-    setOptionsModalVisible(false);
-    setProductId(null);
-  }
-
-
-  const storeOrder = () => {
-    try{
-      storeCustomerInformation();
-      alert("Order saved successfully!");
-      setWarningModalVisible(false);
-    }
-    catch (error) {
-      alert(`Error saving order: ${error}`);
-    }
-  }
-  
-  useEffect(() => {
-    console.log("Current selected products:", selectedProducts);
-  }, [selectedProducts]);
-
-
-
   // const addProductToList = (product: ProductType, isAdding: Boolean) => {
   //   if (!isAdding) {
   //     product.count--;
@@ -193,14 +84,26 @@ export default function SelectProductModal({isVisible, onClose}: Props) {
   //   console.log(selectedProducts);
   // };
 
-  const addProductToList = (product: ProductType, isAdding: Boolean) => {
-    product.count++;
-    if(product.count === 1) {
-      setSelectedProducts([...selectedProducts, product]);
+
+  const optionsExists = async (productId: number) => {
+            const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
+            if (result.length > 0) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+        
+  const openOptionsModal = async (product: ProductType) => {
+    // Check to see if options exist for this product
+    if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
+      setName(product.name);
+      setProductId(product.id);
+      setOptionsModalVisible(true);
     }
-    setSum(sum + parseInt(product.email));
-    console.log(selectedProducts);
-  };
+  }
+
+ 
 
   return (
     <Modal
@@ -218,11 +121,11 @@ export default function SelectProductModal({isVisible, onClose}: Props) {
                     key={product.id}
                     style={[
                         styles.cell, 
-                        selectedProducts.some(item => item.name === product.name) &&
+                        currProduct === product &&
                         { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
                     ]}
                     onPress={async () => {
-                        await optionsExists(product.id) ? openOptionsModal(product): addProductToList(product, true);
+                        await optionsExists(product.id) ? openOptionsModal(product): setCurrProduct(product);
                     }}>
                     {/* <View style={styles.productCounterContainer}>
                         <Pressable 
@@ -245,56 +148,51 @@ export default function SelectProductModal({isVisible, onClose}: Props) {
                         </Pressable>
                     </View> */}
                     <Text style={styles.text}>{product.name}, ${product.email}</Text>
-                    <Pressable
+                    {editMode && (<Pressable
                         onPress={() => {
+                        setCurrProduct(product);
                         setProductId(product.id);
                         setAddProductModalVisible(true);
                         }}>
                         <Text style={styles.editButton}>Edit</Text>
-                    </Pressable>
+                    </Pressable>)}
                     </Pressable>
                 ))}
                 
             </ScrollView>
             {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
             <View style={styles.buttomContainer}>
-                <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+                <Button label="Submit" theme = "primary" onPress={() => setWarningModalVisible(true)} />
+                <Button label="Back" theme = "primary" onPress={() => onClose()} />
             </View>
 
-            <WarningModal
-                isVisible={warningModalVisible}
-                onClose={() => setWarningModalVisible(false)}
-                onSuccess={() => {
-                storeOrder()      
-                }}
-            />
-            
             <AddProductModal
                 isVisible={addProductModalVisible}
-                onClose={() => {
-                setAddProductModalVisible(false),
-                setProductId(null);
-                }}
-                onSuccess={() => loadData()}
                 productId={productId}
-                database={database}/>
+                database={database}
+                onClose={() => {
+                    setAddProductModalVisible(false);
+                    setProductId(null);
+                }}
+                onSuccess={() => {
+                    setData(data.map(item => item.id === currProduct.id ? currProduct : item));
+                    loadData();
+                    setAddProductModalVisible(false);
+                    setProductId(null);
+                }}/>
 
             <OptionsModal
-                isVisible={optionsModalVisible}
-                productId={productId}
-                name={name}
-                onSuccess={() => {
-                    setOptionsModalVisible(false);
-                    setProductId(null);
+              isVisible={optionsModalVisible}
+              product={currProduct}
+              name={name}
+              onSuccess={(product: ProductType) => onClose()}
+              onClose={() => 
+                {
+                  setOptionsModalVisible(false);
+                  setProductId(null);
                 }
-                }
-                onClose={() => {
-                    setOptionsModalVisible(false);
-                    setProductId(null);
-                }
-                }
-                />
-
+              }
+            />
             </View>
     </Modal>
     

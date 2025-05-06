@@ -2,18 +2,21 @@ import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'r
 import { useState, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
+import { ProductType } from "@/app/(tabs)/order-list";
 
 type Props = {
     isVisible: boolean;
-    productId: number | null;
+    product: ProductType
     name: string;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (product: ProductType) => void;
 }
 
-export default function OptionsModal({isVisible, productId, onClose, onSuccess} : Props) {
+export default function OptionsModal({isVisible, product, onClose, onSuccess} : Props) {
     const [optionsData, setOptionsData] = useState<any[]>([]);
     const database = useSQLiteContext();
+    const [name, setName] = useState(product.name);
+    const [option, setOption] = useState("");
 
     useFocusEffect(
         useCallback(() => {
@@ -41,12 +44,16 @@ export default function OptionsModal({isVisible, productId, onClose, onSuccess} 
                     <Text style={styles.modalTitle}>Options</Text>
                     <ScrollView style={styles.scrollView}>
                         {optionsData.map((option, index) => (
-                            <Pressable key={index} onPress={() => {}}>
+                            <Pressable key={index} onPress={() => {setOption(option.option);}}>
                                 <Text style={styles.optionCell}>{option.option}</Text>
                             </Pressable>
                         ))}
                     </ScrollView>
-                    <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {onSuccess();}}>
+                    <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {
+                        setName(product.name + " " + option);
+                        product.name = name;
+                        onSuccess(product);}
+                        }>
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {onClose();}}>

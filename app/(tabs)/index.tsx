@@ -16,6 +16,7 @@ export default function Index() {
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
+  const [product, setProduct] = useState<ProductType>({id: 0, name: "", email: "", count: 0, hasOptions: false});
 
   
   const [name, setName] = useState("");
@@ -270,7 +271,7 @@ export default function Index() {
 
       <OptionsModal
         isVisible={optionsModalVisible}
-        productId={productId}
+        product={product}
         name={name}
         onSuccess={() => {
             setOptionsModalVisible(false);
