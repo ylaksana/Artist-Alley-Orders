@@ -97,8 +97,10 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const openOptionsModal = async (product: ProductType) => {
     // Check to see if options exist for this product
     if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
+      setCurrProduct(product);
       setName(product.name);
       setProductId(product.id);
+      console.log("Product:", product); // Check the productId value
       setOptionsModalVisible(true);
     }
   }
@@ -162,8 +164,14 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
             </ScrollView>
             {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
             <View style={styles.buttomContainer}>
-                <Button label="Submit" theme = "primary" onPress={() => setWarningModalVisible(true)} />
-                <Button label="Back" theme = "primary" onPress={() => onClose()} />
+                {!editMode && (<Button label="Submit" theme = "primary" onPress={() => setWarningModalVisible(true)} />)}
+                <Button label="Back" theme = "primary" onPress={() =>
+                  {
+                    setCurrProduct(defaultProduct);
+                    console.log(currProduct); // Check the productId value
+                    onClose();
+                  }
+                  } />
             </View>
 
             <AddProductModal
@@ -185,14 +193,16 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
               isVisible={optionsModalVisible}
               product={currProduct}
               name={name}
-              onSuccess={(product: ProductType) => onClose()}
+              onSuccess={(product: ProductType) => onSuccess(product)}
               onClose={() => 
                 {
                   setOptionsModalVisible(false);
+                  console.log("Product ID:", productId); // Check the productId value
                   setProductId(null);
                 }
               }
             />
+            
             </View>
     </Modal>
     

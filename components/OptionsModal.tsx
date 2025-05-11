@@ -1,5 +1,5 @@
 import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 import { ProductType } from "@/app/(tabs)/order-list";
@@ -13,24 +13,36 @@ type Props = {
 }
 
 export default function OptionsModal({isVisible, product, onClose, onSuccess} : Props) {
-    const [optionsData, setOptionsData] = useState<any[]>([]);
+    const [options, setOptions] = useState<any[]>([]);
     const database = useSQLiteContext();
-    const [name, setName] = useState(product.name);
-    const [option, setOption] = useState("");
+    const [selectedOption, setSelectedOption] = useState<string>("");
 
-    useFocusEffect(
-        useCallback(() => {
-          loadOptions();
+    useEffect(() => {
+        if (!isVisible) {
+            setSelectedOption("");
         }
-        , [])
-      );
+    }, [isVisible]);
 
+    useEffect(() => {
+        if (isVisible) {
+            loadOptions();
+        }
+    }, [isVisible, product]);
 
     const loadOptions = async () => {
-        const result = await database.getAllAsync(`SELECT * FROM extra_options`);
-        console.log("Options loaded:", result); // Check what data is being returned
-        setOptionsData(result);
+        try{
+            console.log(product);
+            console.log("Loading options for product ID:", product.id);
+            const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [product.id]);
+            setOptions(result);
+            console.log("Options loaded:", result); // Check what data is being returned}
+        }
+        catch (error) {
+            console.error("Error loading options:", error);
+        }
     }
+
+    
 
     return (
         <Modal
@@ -43,20 +55,24 @@ export default function OptionsModal({isVisible, product, onClose, onSuccess} : 
                 <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Options</Text>
                     <ScrollView style={styles.scrollView}>
-                        {optionsData.map((option, index) => (
-                            <Pressable key={index} onPress={() => {setOption(option.option);}}>
+                        {options.map((option, index) => (
+                            <Pressable key={index} onPress={() => {setSelectedOption(option);}}>
                                 <Text style={styles.optionCell}>{option.option}</Text>
                             </Pressable>
                         ))}
                     </ScrollView>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {
-                        setName(product.name + " " + option);
-                        product.name = name;
+                        product.name += ` ${selectedOption}`;
                         onSuccess(product);}
                         }>
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
-                    <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {onClose();}}>
+                    <Pressable 
+                        style={[styles.button, styles.buttonClose]} 
+                        onPress={() => {
+                            setOptions([]);
+                            onClose();   
+                        }}>
                         <Text style={styles.buttonText}>Back</Text>
                     </Pressable>
                 </View>

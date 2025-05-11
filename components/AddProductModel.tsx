@@ -16,7 +16,7 @@ type Props = PropsWithChildren<{
   }>;
   
 
-export default function WarningModal({isVisible, onSuccess, onClose, productId, database} : Props) {
+export default function AddProductModal({isVisible, onSuccess, onClose, productId, database} : Props) {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [count, setCount] = useState(0);
@@ -40,6 +40,8 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
             loadData();
         }else{
             setEditMode(false);
+            setOptionsData([]);
+            console.log("optionsData", optionsData);
         }
     }, [isVisible, productId]);
 
@@ -287,6 +289,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
                   onPress={async () => {
                     addOption();
                     handleOptionChange();
+                    setOptionsData([])
                   }}>
                 <Text style={{color: '#000'}}>Add Option</Text>
                 </Pressable>)}
@@ -300,6 +303,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, productId, 
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
+                    setOptionsData([])
                     setExtraOptions(false);
                   }}>
                   <Text style={{color: '#000'}}>Back</Text>
