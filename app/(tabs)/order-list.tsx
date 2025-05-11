@@ -81,6 +81,14 @@ export default function OrderList() {
         }
         , [])
       );
+
+      const deleteProductFromList = (product: ProductType) => {
+        product.count--;
+        if (product.count < 1) {
+          setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
+        }
+        setSum(sum - parseInt(product.email));
+      };
     
     
       const addProductToList = (product: ProductType) => {
@@ -154,18 +162,18 @@ export default function OrderList() {
                 <View>{
                 // Count and Name of the selected products
                 selectedProducts.map((product) => (
+                  <View key={product.id} style={styles.itemContainer}>
                       <Text style={styles.orderText}>
                           {product.count}x {product.name}
                       </Text>
-                ))}
-                {/* Delete Button */}
-                <Pressable 
-                  onPress={() => setSelectProductModalVisible(true)} 
-                  style={{marginLeft: 5, padding: 10}}>
-
-                    <FontAwesome name="trash" size={24} color="#ffd33d"/>
-                
-                </Pressable>
+                      {/* Delete Button */}
+                      <Pressable 
+                        onPress={() => deleteProductFromList(product)} 
+                        style={{marginLeft: 5, padding: 10}}>
+                        <FontAwesome name="trash" size={24} color="#ffd33d"/>                    
+                      </Pressable>
+                  </View>
+                  ))}
                 </View>
                 
                 
@@ -190,14 +198,14 @@ export default function OrderList() {
               setSelectProductModalVisible(false);
               setEditMode(false);
             }}
-            onSuccess={(product: ProductType) => addProductToList(product)}>
-          </SelectProductModal>
+            onSuccess={() => setWarningModalVisible(true)}/>
 
           <WarningModal
               isVisible={warningModalVisible}
               onClose={() => setWarningModalVisible(false)}
               onSuccess={() => {
-              storeOrder()      
+                storeOrder()
+                setWarningModalVisible(false)   
               }}
           />
 
@@ -229,6 +237,10 @@ const styles = StyleSheet.create({
         width: '100%',
         maxHeight: 300,
     },
+    itemContainer: {
+        flexDirection: 'row', 
+        justifyContent: 'space-between',
+    },    
     orderText: {
         fontSize: 18,
         color: '#fff',

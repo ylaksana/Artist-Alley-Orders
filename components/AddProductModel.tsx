@@ -32,6 +32,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             setName("");
             setPrice("");
             setEditMode(false);
+            setOptionsData([]);
+            console.log("optionsData", optionsData);
             return;
         }
 
@@ -40,8 +42,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             loadData();
         }else{
             setEditMode(false);
-            setOptionsData([]);
-            console.log("optionsData", optionsData);
         }
     }, [isVisible, productId]);
 
@@ -180,6 +180,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         console.log("Deleting product with ID:", productId);
         await database.runAsync(
           `DELETE FROM users WHERE id = ?`,
+          [productId]
+        );
+        await database.runAsync(
+          `DELETE FROM extra_options WHERE id = ?`,
           [productId]
         );
         onSuccess();

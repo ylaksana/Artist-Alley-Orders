@@ -5,7 +5,6 @@ import { useSQLiteContext } from "expo-sqlite";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Button from "@/components/Button"; // Adjust the path as necessary
-import WarningModal from "@/components/WarningModal"; // Adjust the path as necessary
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 import OptionsModal from "@/components/OptionsModal";
 import { ProductType, defaultProduct } from "@/app/(tabs)/order-list";
@@ -20,16 +19,15 @@ type Props = {
 
 export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
   const [data, setData] = useState<ProductType[]>([]);
-  const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
-
-  
   const [name, setName] = useState("");
-  const database = useSQLiteContext();
   const [sum, setSum] = useState(0);
+  
+  
+  const database = useSQLiteContext();
 
 
   const loadData = async () => {
@@ -100,7 +98,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
       setCurrProduct(product);
       setName(product.name);
       setProductId(product.id);
-      console.log("Product:", product); // Check the productId value
+      console.log("Product:", product);
       setOptionsModalVisible(true);
     }
   }
@@ -123,11 +121,10 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                     key={product.id}
                     style={[
                         styles.cell, 
-                        currProduct === product &&
-                        { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
+                        { backgroundColor: currProduct.id === product.id ? '#525b66' : '#25292e' }
                     ]}
                     onPress={async () => {
-                        await optionsExists(product.id) ? openOptionsModal(product): setCurrProduct(product);
+                        await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
                     }}>
                     {/* <View style={styles.productCounterContainer}>
                         <Pressable 
@@ -162,9 +159,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 ))}
                 
             </ScrollView>
-            {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
+            {sum > 0 && currProduct !== null && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
             <View style={styles.buttomContainer}>
-                {!editMode && (<Button label="Submit" theme = "primary" onPress={() => setWarningModalVisible(true)} />)}
+                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => onSuccess(currProduct)} />)}
                 <Button label="Back" theme = "primary" onPress={() =>
                   {
                     setCurrProduct(defaultProduct);
@@ -191,18 +188,24 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
             <OptionsModal
               isVisible={optionsModalVisible}
-              product={currProduct}
+              productId={productId}
               name={name}
-              onSuccess={(product: ProductType) => onSuccess(product)}
+              onSuccess={(name: string,) => {
+                currProduct.name += " " + name;
+                setOptionsModalVisible(false);
+                console.log("Product ID:", productId); // Check the productId value
+                setProductId(null);
+              }}
               onClose={() => 
                 {
+                  setCurrProduct(defaultProduct);
                   setOptionsModalVisible(false);
                   console.log("Product ID:", productId); // Check the productId value
                   setProductId(null);
                 }
               }
             />
-            
+
             </View>
     </Modal>
     

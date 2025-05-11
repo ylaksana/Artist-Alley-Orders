@@ -6,34 +6,27 @@ import { ProductType } from "@/app/(tabs)/order-list";
 
 type Props = {
     isVisible: boolean;
-    product: ProductType
+    productId: number | null;
     name: string;
     onClose: () => void;
-    onSuccess: (product: ProductType) => void;
+    onSuccess: (name: string) => void;
 }
 
-export default function OptionsModal({isVisible, product, onClose, onSuccess} : Props) {
+export default function OptionsModal({isVisible, productId, name, onClose, onSuccess} : Props) {
     const [options, setOptions] = useState<any[]>([]);
     const database = useSQLiteContext();
     const [selectedOption, setSelectedOption] = useState<string>("");
 
     useEffect(() => {
-        if (!isVisible) {
-            setSelectedOption("");
-        }
-    }, [isVisible]);
-
-    useEffect(() => {
         if (isVisible) {
             loadOptions();
         }
-    }, [isVisible, product]);
+    }, [isVisible, productId]);
 
     const loadOptions = async () => {
         try{
-            console.log(product);
-            console.log("Loading options for product ID:", product.id);
-            const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [product.id]);
+            console.log("Loading options for product ID:", productId);
+            const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
             setOptions(result);
             console.log("Options loaded:", result); // Check what data is being returned}
         }
@@ -56,14 +49,22 @@ export default function OptionsModal({isVisible, product, onClose, onSuccess} : 
                     <Text style={styles.modalTitle}>Options</Text>
                     <ScrollView style={styles.scrollView}>
                         {options.map((option, index) => (
-                            <Pressable key={index} onPress={() => {setSelectedOption(option);}}>
-                                <Text style={styles.optionCell}>{option.option}</Text>
+                            <Pressable key={index} onPress={() => {
+                                setSelectedOption(option.option);
+                                console.log("Selected option:", selectedOption, "This option:", option.option);
+                            }}>
+                                <Text style={
+                                    [styles.optionCell,
+                                    { backgroundColor: selectedOption === option.option ? '#525b66' : '#25292e' }]
+                                    }>
+                                {option.option}
+                                </Text>
                             </Pressable>
                         ))}
                     </ScrollView>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {
-                        product.name += ` ${selectedOption}`;
-                        onSuccess(product);}
+                        name += ` ${selectedOption}`;
+                        onSuccess(name);}
                         }>
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
