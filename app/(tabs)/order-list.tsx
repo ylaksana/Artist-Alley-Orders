@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput } from 
 import { useSQLiteContext } from "expo-sqlite";
 import { Stack, useFocusEffect } from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 import SelectProductModal from "@/components/SelectProductModal";
 import WarningModal from "@/components/WarningModal";
@@ -19,11 +19,11 @@ export const defaultProduct = {id: 0, name: "", email: "", count: 0, hasOptions:
 
 export default function OrderList() {
     // variables
-    const [data, setData] = useState<ProductType[]>([]);
     const [warningModalVisible, setWarningModalVisible] = useState(false);
     const [SelectProductModalVisible, setSelectProductModalVisible] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState(0);
+    const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
     const [editMode, setEditMode] = useState(false);
 
     // database
@@ -49,38 +49,7 @@ export default function OrderList() {
           </Pressable>
         )
       }
-
-      const loadData = async () => {
-        const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
-      
-        // Merge with existing selectedProducts counts
-        const updatedResult = result.map(product => {
-        // Find this product in selectedProducts (if it exists)
-        const selectedProduct = selectedProducts.find(item => item.id === product.id);
-        
-        if (selectedProduct) {
-          // If it exists in selectedProducts, use its count
-          return {
-            ...product,
-            count: selectedProduct.count
-          };
-        }
-        
-        // Otherwise return the product as is (with count 0 or whatever default)
-        return product;
-      });
-      
-      // Update the data state with the merged information
-      setData(updatedResult);
     
-      };
-    
-      useFocusEffect(
-        useCallback(() => {
-          loadData();
-        }
-        , [])
-      );
 
       const deleteProductFromList = (product: ProductType) => {
         product.count--;
@@ -91,74 +60,98 @@ export default function OrderList() {
       };
     
     
-      const addProductToList = (product: ProductType) => {
-        product.count++;
-        if(product.count === 1) {
-          setSelectedProducts([...selectedProducts, product]);
+      const addProductToList = (product: ProductType, option: string) => {
+        // create product object with the selected product
+        const newProduct = {...product};
+        console.log("newProduct:", newProduct);
+        
+        // check if the product has options, if so change the name
+        console.log("option:", option);
+        if(option !== ""){
+            newProduct.name += " " + option;
+            console.log("newProduct with option:", newProduct);
+          }
+
+        // check if the product is already in the selectedProducts array
+        const index = selectedProducts.findIndex(item => item.name === newProduct.name)
+        console.log("index:", index);
+
+        // if the product is not in the array, add it
+        if(index === -1){ 
+          newProduct.count = 1;
+          setSelectedProducts([...selectedProducts, newProduct]);
+        }
+        // if the product is already in the array, increase the count
+        else{
+          selectedProducts[index].count += 1;
         }
         setSum(sum + parseInt(product.email));
         console.log(selectedProducts);
+        console.log('option:', option);
+        setCurrProduct(defaultProduct);
       };
 
-       const storeCustomerInformation = async() =>{
-          try{
-            const result = await database.runAsync(
-              "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
-              [
-                "Convention Sale",
-                'N/A',
-                'N/A',
-                sum,
-                'N/A'
-              ]
-            );
-      
-            const orderId = result.lastInsertRowId;
-            
-            for (const product of selectedProducts) {
-              if (product.count > 0) {
-                try {
-                  // Fixed SQL query with closing parenthesis
-                  await database.runAsync(
-                    "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
-                    [
-                      orderId,
-                      product.name,
-                      product.count
-                    ]
-                  );
-                  console.log("Saved product:", product.name, "with count:", product.count);
-                } catch (productError) {
-                  console.error("Error saving product:", productError, product);
-                }
+      const storeCustomerInformation = async() =>{
+        try{
+          const result = await database.runAsync(
+            "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
+            [
+              "Convention Sale",
+              'N/A',
+              'N/A',
+              sum,
+              'N/A'
+            ]
+          );
+    
+          const orderId = result.lastInsertRowId;
+          
+          for (const product of selectedProducts) {
+            if (product.count > 0) {
+              try {
+                // Fixed SQL query with closing parenthesis
+                await database.runAsync(
+                  "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
+                  [
+                    orderId,
+                    product.name,
+                    product.count
+                  ]
+                );
+                console.log("Saved product:", product.name, "with count:", product.count);
+              } catch (productError) {
+                console.error("Error saving product:", productError, product);
               }
             }
-            
-            setSum(0);
-            setSelectedProducts([]);
-          } catch (error) {
-            const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
-            alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-            console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-          } 
-        }
-      
-        const storeOrder = () => {
-          try{
-            storeCustomerInformation();
-            alert("Order saved successfully!");
           }
-          catch (error) {
-            alert(`Error saving order: ${error}`);
-          }
+          
+          setSum(0);
+          setSelectedProducts([]);
+        } catch (error) {
+          const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
+          alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+          console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+        } 
+      }
+    
+      const storeOrder = () => {
+        try{
+          storeCustomerInformation();
+          alert("Order saved successfully!");
         }
+        catch (error) {
+          alert(`Error saving order: ${error}`);
+        }
+      }
 
     return (
         <View style={styles.container}>
             <Stack.Screen options={{headerLeft}}/>
             <Stack.Screen options={{headerRight}}/>
-            <Text style={styles.title}>Order List</Text>
-            <ScrollView style={styles.scrollView}>
+            {selectedProducts.length === 0 && (
+              <Text style={styles.title}>Click the plus button to start adding items!</Text>)}
+            {selectedProducts.length > 0 && (
+              <ScrollView style={styles.scrollView}>
                 <View>{
                 // Count and Name of the selected products
                 selectedProducts.map((product) => (
@@ -175,16 +168,10 @@ export default function OrderList() {
                   </View>
                   ))}
                 </View>
-                
-                
-            </ScrollView>
-            <Pressable style={styles.button} onPress={() => {}}>
-                <Text style={styles.buttonText}>Add Order</Text>
-            </Pressable>
+            </ScrollView>)}
 
             {selectedProducts.length > 0 && (
               <View style={styles.bottomHeader}>  
-                <Text style={{color: '#fff', fontSize: 18}}>Total: {sum}</Text>
                 <Pressable onPress={() => setSelectProductModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
                     <FontAwesome name="check" size={24} color="#ffd33d"/>
                 </Pressable>
@@ -198,14 +185,20 @@ export default function OrderList() {
               setSelectProductModalVisible(false);
               setEditMode(false);
             }}
-            onSuccess={() => setWarningModalVisible(true)}/>
+            onSuccess={(currProduct: ProductType, option: string) => {
+              setCurrProduct(currProduct);
+              addProductToList(currProduct, option);
+              console.log("selectedProducts:", selectedProducts);
+              setSelectProductModalVisible(false);
+              setCurrProduct(defaultProduct);
+              }}/>
 
           <WarningModal
               isVisible={warningModalVisible}
               onClose={() => setWarningModalVisible(false)}
               onSuccess={() => {
                 storeOrder()
-                setWarningModalVisible(false)   
+                setWarningModalVisible(false);
               }}
           />
 
@@ -228,9 +221,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#25292e',
     },
     title: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#ffd33d',
+        color: '#6b7178',
         marginBottom: 20,
     },
     scrollView: {
@@ -238,8 +231,15 @@ const styles = StyleSheet.create({
         maxHeight: 300,
     },
     itemContainer: {
-        flexDirection: 'row', 
-        justifyContent: 'space-between',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      marginBottom: 10,
+      backgroundColor: '#25292e',
+      borderRadius: 5,
+      borderWidth: 1,
+      borderColor: '#525961',
     },    
     orderText: {
         fontSize: 18,

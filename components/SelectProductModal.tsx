@@ -14,7 +14,7 @@ type Props = {
     isVisible: boolean;
     editMode?: boolean;
     onClose: () => void;
-    onSuccess: (product: ProductType) => void;
+    onSuccess: (product: ProductType, name: string) => void;
 }
 
 export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
@@ -23,8 +23,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
-  const [name, setName] = useState("");
-  const [sum, setSum] = useState(0);
+  const [name, setName] = useState<string>("");
   
   
   const database = useSQLiteContext();
@@ -96,7 +95,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     // Check to see if options exist for this product
     if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
       setCurrProduct(product);
-      setName(product.name);
       setProductId(product.id);
       console.log("Product:", product);
       setOptionsModalVisible(true);
@@ -159,13 +157,15 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 ))}
                 
             </ScrollView>
-            {sum > 0 && currProduct !== null && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
             <View style={styles.buttomContainer}>
-                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => onSuccess(currProduct)} />)}
+                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => {
+                  console.log("Name:", name); 
+                  onSuccess(currProduct, "")}
+                  } />)}
                 <Button label="Back" theme = "primary" onPress={() =>
                   {
                     setCurrProduct(defaultProduct);
-                    console.log(currProduct); // Check the productId value
+                    console.log(currProduct);
                     onClose();
                   }
                   } />
@@ -189,24 +189,23 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
             <OptionsModal
               isVisible={optionsModalVisible}
               productId={productId}
-              name={name}
-              onSuccess={(name: string,) => {
-                currProduct.name += " " + name;
+              onSuccess={(option: string) => {
+                console.log("Name 1:", option);
+                onSuccess(currProduct, option);
                 setOptionsModalVisible(false);
-                console.log("Product ID:", productId); // Check the productId value
+                console.log("Product ID:", productId);
                 setProductId(null);
               }}
               onClose={() => 
                 {
                   setCurrProduct(defaultProduct);
                   setOptionsModalVisible(false);
-                  console.log("Product ID:", productId); // Check the productId value
+                  console.log("Product ID:", productId);
                   setProductId(null);
                 }
               }
             />
-
-            </View>
+          </View>
     </Modal>
     
   );
@@ -244,7 +243,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#25292e',
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#525961', // Change this color to modify the border color
+    borderColor: '#525961',
   },
   editButton: {
     color: '#25292e',

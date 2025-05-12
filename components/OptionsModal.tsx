@@ -7,12 +7,11 @@ import { ProductType } from "@/app/(tabs)/order-list";
 type Props = {
     isVisible: boolean;
     productId: number | null;
-    name: string;
     onClose: () => void;
     onSuccess: (name: string) => void;
 }
 
-export default function OptionsModal({isVisible, productId, name, onClose, onSuccess} : Props) {
+export default function OptionsModal({isVisible, productId, onClose, onSuccess} : Props) {
     const [options, setOptions] = useState<any[]>([]);
     const database = useSQLiteContext();
     const [selectedOption, setSelectedOption] = useState<string>("");
@@ -50,7 +49,8 @@ export default function OptionsModal({isVisible, productId, name, onClose, onSuc
                     <ScrollView style={styles.scrollView}>
                         {options.map((option, index) => (
                             <Pressable key={index} onPress={() => {
-                                setSelectedOption(option.option);
+                                const newOption = option.option;
+                                setSelectedOption(newOption);
                                 console.log("Selected option:", selectedOption, "This option:", option.option);
                             }}>
                                 <Text style={
@@ -63,8 +63,9 @@ export default function OptionsModal({isVisible, productId, name, onClose, onSuc
                         ))}
                     </ScrollView>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {
-                        name += ` ${selectedOption}`;
-                        onSuccess(name);}
+                        onSuccess(selectedOption);
+                        setSelectedOption("");
+                    }
                         }>
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
@@ -72,6 +73,7 @@ export default function OptionsModal({isVisible, productId, name, onClose, onSuc
                         style={[styles.button, styles.buttonClose]} 
                         onPress={() => {
                             setOptions([]);
+                            setSelectedOption("");
                             onClose();   
                         }}>
                         <Text style={styles.buttonText}>Back</Text>
