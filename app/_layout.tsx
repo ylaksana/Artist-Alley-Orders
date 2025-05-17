@@ -9,43 +9,54 @@ export default function RootLayout() {
   const createDBIfNeeded = async (db:SQLiteDatabase) => {
     // This function can be used to initialize the database if needed
     console.log("Checking if database needs to be created...");
-    await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        email TEXT,
-        count INTEGER
-      );`
-    );
-  
-    await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS orders (
+    try{
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          type TEXT,
           name TEXT,
           email TEXT,
-          price REAL
+          count INTEGER,
+          hasOptions BOOLEAN DEFAULT 0
         );`
       );
+      console.log("Products table created successfully.");
+    
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT,
+            name TEXT,
+            email TEXT,
+            price REAL
+          );`
+        );
+      console.log("Orders table created successfully.");
 
-    await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS sold_products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        product TEXT,
-        count INTEGER,
-        FOREIGN KEY (user_id) REFERENCES orders(id)
-      );`
-    );
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS sold_products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          product TEXT,
+          count INTEGER,
+          FOREIGN KEY (user_id) REFERENCES orders(id)
+        );`
+      );
+      console.log("Sold products table created successfully.");
 
-    await db.execAsync(
-      `CREATE TABLE IF NOT EXISTS extra_options (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        option TEXT,
-        FOREIGN KEY (user_id) REFERENCES orders(id)
-      );`
-    );
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS extra_options (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          option TEXT,
+          FOREIGN KEY (user_id) REFERENCES orders(id)
+        );`
+      );
+      console.log("Extra options table created successfully.");
+      }
+      catch (error) {
+        console.error("Error creating tables:", error);
+      }
+    
     
   };
 

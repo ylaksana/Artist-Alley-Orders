@@ -61,20 +61,6 @@ export default function TabsLayout() {
           }} 
         />
 
-        <Tabs.Screen
-            name="order-list"
-            options={{ 
-            title:"Order List",
-            tabBarIcon: ({focused, color}) => (
-                <Ionicons 
-                    name={focused ? "options" : "options-outline"}
-                    color={color}
-                    size={24}
-                />
-            ),
-          }}
-        />
-
         </Tabs>
       
   );

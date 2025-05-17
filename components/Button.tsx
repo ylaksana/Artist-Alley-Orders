@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: 320,
         height: 68,
-        marginBottom: 20,
+        marginBottom: 10,
         marginHorizontal: 20,
         alignItems: 'center',
         justifyContent: 'center',

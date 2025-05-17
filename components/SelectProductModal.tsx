@@ -7,7 +7,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Button from "@/components/Button"; // Adjust the path as necessary
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 import OptionsModal from "@/components/OptionsModal";
-import { ProductType, defaultProduct } from "@/app/(tabs)/order-list";
+import { ProductType, defaultProduct } from "@/app/(tabs)/index";
 
 
 type Props = {
@@ -37,19 +37,27 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
     // Otherwise return the product as is (with count 0 or whatever default)
     return product;
-  });
+    });
   
-  // Update the data state with the merged information
-  setData(updatedResult);
+    // Update the data state with the merged information
+    setData(updatedResult);
+    
 
   };
 
   useFocusEffect(
     useCallback(() => {
       loadData();
+      setCurrProduct
     }
     , [])
   );
+
+  // useFocusEffect(() => {
+  //   if (isVisible) {
+  //     setCurrProduct(defaultProduct);
+  //   }
+  // })
 
   const headerRight = () => {
     return(
@@ -58,28 +66,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
       </Pressable>
     )
   }
-
-  // const addProductToList = (product: ProductType, isAdding: Boolean) => {
-  //   if (!isAdding) {
-  //     product.count--;
-  //     if (product.count < 1) {
-  //       setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
-  //     }
-
-  //     setSum(sum - parseInt(product.email));
-
-  //   } else {
-  //     product.count++;
-  //     if(product.count === 1) {
-
-  //       setSelectedProducts([...selectedProducts, product]);
-  //     }
-
-  //     setSum(sum + parseInt(product.email));
-
-  //   }
-  //   console.log(selectedProducts);
-  // };
 
 
   const optionsExists = async (productId: number) => {
@@ -145,23 +131,39 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                         </Pressable>
                     </View> */}
                     <Text style={styles.text}>{product.name}, ${product.email}</Text>
-                    {editMode && (<Pressable
+                    
+                    {editMode && (
+                      <Pressable
                         onPress={() => {
                         setCurrProduct(product);
                         setProductId(product.id);
                         setAddProductModalVisible(true);
                         }}>
                         <Text style={styles.editButton}>Edit</Text>
-                    </Pressable>)}
                     </Pressable>
-                ))}
-                
+                  )}
+                    </Pressable>
+                  
+                ))}    
             </ScrollView>
+
+            
+
             <View style={styles.buttomContainer}>
                 {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => {
                   console.log("Name:", name); 
                   onSuccess(currProduct, "")}
                   } />)}
+                {/* add product button */}
+
+                {editMode && (
+                  <Button
+                    label="Add Product"
+                    theme="primary"
+                    onPress={() => {
+                      setAddProductModalVisible(true);
+                    }}/>
+                )}
                 <Button label="Back" theme = "primary" onPress={() =>
                   {
                     setCurrProduct(defaultProduct);
@@ -176,6 +178,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 productId={productId}
                 database={database}
                 onClose={() => {
+                    setCurrProduct(defaultProduct);
                     setAddProductModalVisible(false);
                     setProductId(null);
                 }}
@@ -231,6 +234,7 @@ const styles = StyleSheet.create({
   },
   scrollView:{
     backgroundColor: "#25292e",
+    height: 300,
     width: "100%",
     flex: 1,
   },

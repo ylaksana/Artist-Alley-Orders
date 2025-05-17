@@ -1,32 +1,14 @@
 import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput } from "react-native";
-import {useState, useEffect, useCallback} from 'react';
-import { Stack, useFocusEffect, router } from "expo-router";
 import { useSQLiteContext } from "expo-sqlite";
+import { Stack, useFocusEffect } from "expo-router";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useState, useCallback, useEffect } from "react";
 
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import SelectProductModal from "@/components/SelectProductModal";
+import WarningModal from "@/components/WarningModal";
 import Button from "@/components/Button"; // Adjust the path as necessary
-import WarningModal from "@/components/WarningModal"; // Adjust the path as necessary
-import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
-import OptionsModal from "@/components/OptionsModal";
 
-export default function Index() {
-  const [data, setData] = useState<ProductType[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
-  const [warningModalVisible, setWarningModalVisible] = useState(false);
-  const [addProductModalVisible, setAddProductModalVisible] = useState(false);
-  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-  const [productId, setProductId] = useState<number | null>(null);
-  const [product, setProduct] = useState<ProductType>({id: 0, name: "", email: "", count: 0, hasOptions: false});
-
-  
-  const [name, setName] = useState("");
-  const [orderType, setOrderType] = useState("");
-  const [email, setEmail] = useState("");
-
-  const database = useSQLiteContext();
-  const [sum, setSum] = useState(0);
-
-  type ProductType = {
+export type ProductType = {
     id: number;
     name:string;
     email:string;
@@ -34,330 +16,275 @@ export default function Index() {
     hasOptions: boolean;
   }
 
+export const defaultProduct = {id: 0, name: "", email: "", count: 0, hasOptions: false};
 
-  const loadData = async () => {
-    const result = await database.getAllAsync<ProductType>(`SELECT * FROM users`);
-  
-    // Merge with existing selectedProducts counts
-    const updatedResult = result.map(product => {
-    // Find this product in selectedProducts (if it exists)
-    const selectedProduct = selectedProducts.find(item => item.id === product.id);
+export default function Index() {
+    // variables
+    const [warningModalVisible, setWarningModalVisible] = useState(false);
+    const [SelectProductModalVisible, setSelectProductModalVisible] = useState(false);
+    const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
+    const [sum, setSum] = useState(0);
+    const [editMode, setEditMode] = useState(false);
+
+    // database
+    const database = useSQLiteContext();
+
+    // functions
+    const headerLeft = () => {
+        return(
+          <Pressable onPress={() => {
+            setEditMode(true);
+            setSelectProductModalVisible(true);
+            }
+          } 
+          style={{marginLeft: 5, padding: 10}}>
+            <FontAwesome name="gear" size={24} color="#ffd33d"/>
+          </Pressable>
+        )
+      }
+
+      const headerRight = () => {
+        return(
+          <Pressable onPress={() => setSelectProductModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
+            <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
+          </Pressable>
+        )
+      }
     
-    if (selectedProduct) {
-      // If it exists in selectedProducts, use its count
-      return {
-        ...product,
-        count: selectedProduct.count
+
+      const deleteProductFromList = (product: ProductType) => {
+        product.count--;
+        if (product.count < 1) {
+          setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
+        }
+        setSum(sum - parseInt(product.email));
       };
-    }
     
-    // Otherwise return the product as is (with count 0 or whatever default)
-    return product;
-  });
-  
-  // Update the data state with the merged information
-  setData(updatedResult);
-
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }
-    , [])
-  );
-
-  const headerRight = () => {
-    return(
-      <Pressable onPress={() => setAddProductModalVisible(true)} style={{padding: 10}}>
-        <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
-      </Pressable>
-    )
-  }
-
-  const storeCustomerInformation = async() =>{
-    try{
-      const result = await database.runAsync(
-        "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
-        [
-          "Convention Sale",
-          'N/A',
-          'N/A',
-          sum,
-          'N/A'
-        ]
-      );
-
-      const orderId = result.lastInsertRowId;
-      
-      for (const product of selectedProducts) {
-        if (product.count > 0) {
-          try {
-            // Fixed SQL query with closing parenthesis
-            await database.runAsync(
-              "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
-              [
-                orderId,
-                product.name,
-                product.count
-              ]
-            );
-            console.log("Saved product:", product.name, "with count:", product.count);
-          } catch (productError) {
-            console.error("Error saving product:", productError, product);
-          }
-        }
-      }
-      
-      setSum(0);
-      for (let i = 0; i < selectedProducts.length; i++) {
-        const product = selectedProducts[i];
-        product.count = 0;
-      }
-      setSelectedProducts([]);
-      setWarningModalVisible(false);
-    } catch (error) {
-      const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
-      alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-      console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
-    } 
-  }
-
-  const optionsExists = async (productId: number) => {
-    const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
-    if (result.length > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  const openOptionsModal = async (product: ProductType) => {
-    // Check to see if options exist for this product
-    if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
-      setName(product.name);
-      setProductId(product.id);
-      setOptionsModalVisible(true);
-    }
-  }
-
-  const closeOptionsModal = (options: string) => {
-    // add options to the product name
-    setName(name + " " + options);
-    // last step
-    setOptionsModalVisible(false);
-    setProductId(null);
-  }
-
-
-  const storeOrder = () => {
-    try{
-      storeCustomerInformation();
-      alert("Order saved successfully!");
-      setWarningModalVisible(false);
-    }
-    catch (error) {
-      alert(`Error saving order: ${error}`);
-    }
-  }
-  
-  useEffect(() => {
-    console.log("Current selected products:", selectedProducts);
-  }, [selectedProducts]);
-
-
-
-  // const addProductToList = (product: ProductType, isAdding: Boolean) => {
-  //   if (!isAdding) {
-  //     product.count--;
-  //     if (product.count < 1) {
-  //       setSelectedProducts(selectedProducts.filter(item => item.name !== product.name));
-  //     }
-
-  //     setSum(sum - parseInt(product.email));
-
-  //   } else {
-  //     product.count++;
-  //     if(product.count === 1) {
-
-  //       setSelectedProducts([...selectedProducts, product]);
-  //     }
-
-  //     setSum(sum + parseInt(product.email));
-
-  //   }
-  //   console.log(selectedProducts);
-  // };
-
-  const addProductToList = (product: ProductType, isAdding: Boolean) => {
-    product.count++;
-    if(product.count === 1) {
-      setSelectedProducts([...selectedProducts, product]);
-    }
-    setSum(sum + parseInt(product.email));
-    console.log(selectedProducts);
-  };
-
-  return (
-    <View style= {styles.container}>
-      <Stack.Screen options={{headerRight}}/>
-      <ScrollView
-        style={styles.scrollView}>
-        {data.map((product) => (
-            <Pressable 
-              key={product.id}
-              style={[
-                styles.cell, 
-                selectedProducts.some(item => item.name === product.name) &&
-                { backgroundColor: product.count > 0 ? '#525b66' : '#25292e' }
-              ]}
-              onPress={async () => {
-                await optionsExists(product.id) ? openOptionsModal(product): addProductToList(product, true);
-              }}>
-              {/* <View style={styles.productCounterContainer}>
-                <Pressable 
-                style={styles.productCountButton}
-                  onPress={() => {
-                    if (product.count > 0) {
-                      addProductToList(product, false);
-                    }
-                  }}>
-                  <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
-                </Pressable>
-                <Text style={styles.productCounter}>{product.count}</Text>
-                <Pressable 
-                  style={styles.productCountButton}
-                  onPress={() => {
-                    openOptionsModal(product);
-                    addProductToList(product, true);
-                  }}>
-                  <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
-                </Pressable>
-              </View> */}
-              <Text style={styles.text}>{product.name}, ${product.email}</Text>
-              <Pressable
-                onPress={() => {
-                  setProductId(product.id);
-                  setAddProductModalVisible(true);
-                }}>
-                  <Text style={styles.editButton}>Edit</Text>
-              </Pressable>
-            </Pressable>
-        ))}
+    
+      const addProductToList = (product: ProductType, option: string) => {
+        // create product object with the selected product
+        const newProduct = {...product};
+        console.log("newProduct:", newProduct);
         
-      </ScrollView>
-      {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
-      <View style={styles.buttomContainer}>
-        <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
-      </View>
-
-      <WarningModal
-        isVisible={warningModalVisible}
-        onClose={() => setWarningModalVisible(false)}
-        onSuccess={() => {
-          storeOrder()      
-        }}
-      />
-      
-      <AddProductModal
-        isVisible={addProductModalVisible}
-        onClose={() => {
-          setAddProductModalVisible(false),
-          setProductId(null);
-        }}
-        onSuccess={() => loadData()}
-        productId={productId}
-        database={database}/>
-
-      <OptionsModal
-        isVisible={optionsModalVisible}
-        product={product}
-        name={name}
-        onSuccess={() => {
-            setOptionsModalVisible(false);
-            setProductId(null);
+        // check if the product has options, if so change the name
+        console.log("option:", option);
+        if(option !== ""){
+            newProduct.name += " " + option;
+            console.log("newProduct with option:", newProduct);
           }
-        }
-        onClose={() => {
-            setOptionsModalVisible(false);
-            setProductId(null);
-          }
-        }
-        />
 
-    </View>
-  );
+        // check if the product is already in the selectedProducts array
+        const index = selectedProducts.findIndex(item => item.name === newProduct.name)
+        console.log("index:", index);
+
+        // if the product is not in the array, add it
+        if(index === -1){ 
+          newProduct.count = 1;
+          setSelectedProducts([...selectedProducts, newProduct]);
+        }
+        // if the product is already in the array, increase the count
+        else{
+          selectedProducts[index].count += 1;
+        }
+        setSum(sum + parseInt(product.email));
+        console.log(selectedProducts);
+        console.log('option:', option);
+
+      };
+
+      const storeCustomerInformation = async() =>{
+        try{
+          const result = await database.runAsync(
+            "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
+            [
+              "Convention Sale",
+              'N/A',
+              'N/A',
+              sum,
+              'N/A'
+            ]
+          );
+    
+          const orderId = result.lastInsertRowId;
+          
+          for (const product of selectedProducts) {
+            if (product.count > 0) {
+              try {
+                // Fixed SQL query with closing parenthesis
+                await database.runAsync(
+                  "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
+                  [
+                    orderId,
+                    product.name,
+                    product.count
+                  ]
+                );
+                console.log("Saved product:", product.name, "with count:", product.count);
+              } catch (productError) {
+                console.error("Error saving product:", productError, product);
+              }
+            }
+          }
+          
+          setSum(0);
+          setSelectedProducts([]);
+        } catch (error) {
+          const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
+          alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+          console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
+        } 
+      }
+    
+      const storeOrder = () => {
+        try{
+          storeCustomerInformation();
+          alert("Order saved successfully!");
+        }
+        catch (error) {
+          alert(`Error saving order: ${error}`);
+        }
+      }
+
+    return (
+        <View style={styles.container}>
+            <Stack.Screen options={{headerLeft}}/>
+            <Stack.Screen options={{headerRight}}/>
+            {selectedProducts.length === 0 && (
+              <Text style={styles.title}>Click the plus button to start adding items!</Text>)}
+            {selectedProducts.length > 0 && (
+              <ScrollView style={styles.scrollView}>
+                <View>{
+                // Count and Name of the selected products
+                selectedProducts.map((product) => (
+                  <View key={product.id} style={styles.cell}>
+                      <Text style={styles.orderText}>
+                          {product.count}x {product.name}
+                      </Text>
+                      {/* Delete Button */}
+                      <Pressable 
+                        onPress={() => deleteProductFromList(product)} 
+                        style={{marginLeft: 5, padding: 10}}>
+                        <FontAwesome name="trash" size={24} color="#ffd33d"/>                    
+                      </Pressable>
+                  </View>
+                  ))}
+                </View>
+            </ScrollView>)}
+            
+          <SelectProductModal
+            isVisible={SelectProductModalVisible}
+            editMode={editMode}
+            onClose={() => {
+              setSelectProductModalVisible(false);
+              setEditMode(false);
+            }}
+            onSuccess={(currProduct: ProductType, option: string) => {
+              addProductToList(currProduct, option);
+              console.log("selectedProducts:", selectedProducts);
+              setSelectProductModalVisible(false);
+              }}/>
+
+          <WarningModal
+              isVisible={warningModalVisible}
+              onClose={() => setWarningModalVisible(false)}
+              onSuccess={() => {
+                storeOrder()
+                setWarningModalVisible(false);
+              }}
+          />
+
+          {sum > 0 && (
+            <View style={styles.bottomHeader}>
+              <Text style={styles.sumCounter}>Total: ${sum}</Text>
+              <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+              <Pressable
+                style={styles.button} 
+                onPress={() => {
+                  setSum(0);
+                  setSelectedProducts([]);
+                }
+              }>
+                <Text style={styles.buttonText}>Clear</Text>
+              </Pressable>
+            </View>
+            )}
+            
+        </View>
+    )
+
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#25292e",
-
-  },
-  buttomContainer:{
-    marginTop: 20,
-    width: "80%",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  scrollView:{
-    backgroundColor: "#25292e",
-    width: "100%",
-    flex: 1,
-  },
-  cell: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginBottom: 10,
-    backgroundColor: '#25292e',
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#525961', // Change this color to modify the border color
-  },
-  editButton: {
-    color: '#25292e',
-    backgroundColor: '#ffd33d',
-    borderRadius: 5,
-    padding: 5,
-    fontSize: 16,
-    marginTop: 5,
-    fontWeight: 'bold',
-  },
-  sumCounter:{
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    width: '100%',
-    textAlign: 'center',
-    padding: 10,
-  },
-  productCounterContainer:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productCountButton:{
-    marginHorizontal: 5,
-  },
-  productCounter:{
-    fontSize: 20,
-    fontWeight: 'bold',
-    borderColor : '#ffd33d',
-    borderRadius: 5,
-    color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    textAlign: 'center',
-    width: 40,
-    padding: 5,
-  }
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#25292e',
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#6b7178',
+        marginBottom: 20,
+    },
+    scrollView: {
+        width: '100%',
+        maxHeight: "80%",
+    },
+    cell: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 10,
+      margin: 10,
+      backgroundColor: '#25292e',
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: '#525961',
+    },
+    orderText: {
+        fontSize: 18,
+        color: '#fff',
+        padding: 10,
+        fontWeight: 'bold',
+    },
+    button: {
+        backgroundColor: '#ffd33d',
+        paddingVertical: 4,
+        paddingHorizontal: 4,
+        color: '#000',
+        width: 320,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#000',
+        fontSize: 16,
+        fontWeight: 'bold',
+        borderRadius: 10,
+        borderWidth: 3,
+        paddingVertical: 7,
+        width: '100%',
+        borderColor: '#25292e',
+        textAlign: 'center',
+    },
+    bottomHeader:{
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#25292e',
+        padding: 10,
+        width: '100%',
+    },
+    sumCounter:{
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#fff',
+      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+      width: '100%',
+      textAlign: 'center',
+      borderRadius: 5,
+      padding: 10,
+      margin: 10,
+    }
 });

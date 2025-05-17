@@ -1,8 +1,6 @@
 import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useFocusEffect } from 'expo-router';
-import { ProductType } from "@/app/(tabs)/order-list";
 
 type Props = {
     isVisible: boolean;
