@@ -34,20 +34,6 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
-            name="order-form"
-            options={{ 
-            title:"Order Form",
-            tabBarIcon: ({focused, color}) => (
-                <Ionicons 
-                    name={focused ? "clipboard" : "clipboard-outline"}
-                    color={color}
-                    size={24}
-                />
-            ),
-          }} 
-        />
-
-        <Tabs.Screen
             name="order-history"
             options={{ 
             title:"Order History",
