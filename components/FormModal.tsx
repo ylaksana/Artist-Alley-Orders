@@ -1,18 +1,16 @@
 //Library imports
 import { Modal, Text, View, StyleSheet, TextInput} from 'react-native';
-import { useSQLiteContext } from 'expo-sqlite';
 import {useState} from 'react';
 
 // Component imports
 import Button from '@/components/Button';
 import WarningModal from '@/components/WarningModal';
-import SelectProductModal from '@/components/SelectProductModal';
 import { ProductType } from '@/app/(tabs)/index';
 
 type Props = {
     isVisible: boolean;
     onClose: () => void;
-    onSuccess: (name: string) => void;
+    onSuccess: (name: string, phone: string, address: string, sale: string) => void;
     name: string;
     phone: string;
     address: string;
@@ -26,76 +24,50 @@ export default function OrderForm({isVisible, name, phone, address, sale, onClos
   const [sum, setSum] = useState(0);
   const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
 
-  const db = useSQLiteContext();
 
-  const submitForm = async(productList: ProductType[] | undefined) => {
-    if (productList) {
-      try{
-        await db.runAsync(
-            "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
-            [
-              "Customer Sale",
-              'name',
-              'N/A',
-              sum,
-              'N/A'
-            ]
-          );
+    return (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isVisible}
+            onRequestClose={onClose}
+        >
+            <View style={styles.container}>
+            {!selectMode && (
+                <View>
+                <Text style={styles.text}>Order Form</Text>
+                <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" />
+                <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
+                <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
+                <Button label="Select Order" theme="primary" onPress={() => setSelectProductModalVisible(true)} />
+                </View>
+                )
+            }
 
-      }
-      catch (error) {
-        console.error("Error submitting form:", error);
-      }
-    }
-  }
-  return (
+            {selectMode &&(
+                <View>
+                <Text style={styles.text}>Item List</Text>
+                <TextInput style={[styles.textBox, {marginTop:20}]} value={name} placeholder="Enter your name" placeholderTextColor="#888" />
+                <TextInput style={styles.textBox} value={address} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
+                <TextInput style={[styles.textBox, {marginBottom:40}]} value={phone} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
+                <Button label="Submit Order" theme="primary" onPress={() => setWarningModalVisible(true)} />
+                </View>
+                )
+            }
+            
+            <WarningModal
+                isVisible={warningModalVisible}
+                onClose={() => setWarningModalVisible(false)}
+                onSuccess={() => {
+                    setWarningModalVisible(false);
+                    onSuccess(name, phone, address, sale);
+                }}
+                />
 
-    <Modal>
-        <View style={styles.container}>
-
-        {!selectMode && (
-            <View>
-            <Text style={styles.text}>Order Form</Text>
-            <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" />
-            <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
-            <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
-            <Button label="Select Order" theme="primary" onPress={() => setSelectProductModalVisible(true)} />
             </View>
-            )
-        }
-
-        {selectMode &&(
-            <View>
-            <Text style={styles.text}>Item List</Text>
-            <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" />
-            <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
-            <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
-            <Button label="Submit Order" theme="primary" onPress={() => setWarningModalVisible(true)} />
-            </View>
-            )
-        }
+        </Modal>
         
-        <WarningModal
-            isVisible={warningModalVisible}
-            onClose={() => setWarningModalVisible(false)}
-            onSuccess={() => submitForm(selectedProducts)}
-            />
-
-        <SelectProductModal
-            isVisible={selectProductModalVisible}
-            onClose={() => setSelectProductModalVisible(false)}
-            onSuccess={() => 
-            {
-                setSelectProductModalVisible(false);
-                setWarningModalVisible(true)
-            }
-            }
-        />
-
-        </View>
-    </Modal>
-    
-  );
+    );
 
 }
 

@@ -61,10 +61,14 @@ export default function OptionsModal({isVisible, productId, onClose, onSuccess} 
                         ))}
                     </ScrollView>
                     <Pressable style={[styles.button, styles.buttonClose]} onPress={() => {
-                        onSuccess(selectedOption);
-                        setSelectedOption("");
-                    }
-                        }>
+                        if (selectedOption !== "") {
+                            onSuccess(selectedOption);
+                            setSelectedOption("");
+                        }
+                        else {
+                            alert("Please select an option");
+                        }
+                    }}>
                         <Text style={styles.buttonText}>Submit</Text>
                     </Pressable>
                     <Pressable 

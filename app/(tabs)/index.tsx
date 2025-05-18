@@ -24,7 +24,6 @@ export const defaultProduct = {id: 0, name: "", email: "", count: 0, hasOptions:
 export default function Index() {
     // variables
     const [warningModalVisible, setWarningModalVisible] = useState(false);
-    const [orderMode, setOrderMode] = useState(false);
     const [formModalVisible, setFormModalVisible] = useState(false);
     const [name, setName] = useState("N/A");
     const [phone, setPhone] = useState("N/A");
@@ -54,7 +53,7 @@ export default function Index() {
 
       const headerRight = () => {
         return(
-          <Pressable onPress={() => setSelectProductModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
+          <Pressable onPress={() => setFormModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
             <MaterialCommunityIcons name="form-select" size={24} color="#ffd33d"/>
           </Pressable>
         )
@@ -216,6 +215,19 @@ export default function Index() {
                 setWarningModalVisible(false);
               }}
           />
+          
+          <FormModal
+            isVisible={formModalVisible}
+            onClose={() => setFormModalVisible(false)}
+            onSuccess={(name: string, phone: string, address: string, sale: string) => {
+              changeOrderInformation(name, phone, address, sale);
+              setFormModalVisible(false);
+            }}
+            name = {name}
+            phone = {phone}
+            address = {address}
+            sale = {sale}
+            />
 
           {sum > 0 && (
             <View style={styles.bottomHeader}>
