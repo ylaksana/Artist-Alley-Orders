@@ -6,7 +6,10 @@ import { useState, useCallback, useEffect } from "react";
 
 import SelectProductModal from "@/components/SelectProductModal";
 import WarningModal from "@/components/WarningModal";
+import FormModal from "@/components/FormModal";
 import Button from "@/components/Button"; // Adjust the path as necessary
+import Feather from '@expo/vector-icons/Feather';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 export type ProductType = {
     id: number;
@@ -21,6 +24,12 @@ export const defaultProduct = {id: 0, name: "", email: "", count: 0, hasOptions:
 export default function Index() {
     // variables
     const [warningModalVisible, setWarningModalVisible] = useState(false);
+    const [orderMode, setOrderMode] = useState(false);
+    const [formModalVisible, setFormModalVisible] = useState(false);
+    const [name, setName] = useState("N/A");
+    const [phone, setPhone] = useState("N/A");
+    const [address, setAddress] = useState("N/A");
+    const [sale, setSale] = useState("Convention Sale");
     const [SelectProductModalVisible, setSelectProductModalVisible] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState(0);
@@ -46,7 +55,7 @@ export default function Index() {
       const headerRight = () => {
         return(
           <Pressable onPress={() => setSelectProductModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
-            <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
+            <MaterialCommunityIcons name="form-select" size={24} color="#ffd33d"/>
           </Pressable>
         )
       }
@@ -89,19 +98,25 @@ export default function Index() {
         setSum(sum + parseInt(product.email));
         console.log(selectedProducts);
         console.log('option:', option);
-
       };
+
+      const changeOrderInformation = (name: string, phone: string, address: string, sale: string) => {
+        setSale(sale);
+        setName(name);
+        setPhone(phone);
+        setAddress(address);
+      }
 
       const storeCustomerInformation = async() =>{
         try{
           const result = await database.runAsync(
             "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
             [
-              "Convention Sale",
-              'N/A',
-              'N/A',
+              sale,
+              name,
+              address,
               sum,
-              'N/A'
+              phone
             ]
           );
     
@@ -170,6 +185,15 @@ export default function Index() {
                   ))}
                 </View>
             </ScrollView>)}
+
+            <View style={styles.button}>
+              <Pressable
+               style={styles.buttonText}
+               onPress={() => setSelectProductModalVisible(true)}
+               >
+                <Feather name="plus" size={24} color="#25292e"/>
+              </Pressable>
+            </View>
             
           <SelectProductModal
             isVisible={SelectProductModalVisible}
@@ -178,7 +202,7 @@ export default function Index() {
               setSelectProductModalVisible(false);
               setEditMode(false);
             }}
-            onSuccess={(currProduct: ProductType, option: string) => {
+            onSuccess={(currProduct: ProductType, option: string, productList?: ProductType[] | null) => {
               addProductToList(currProduct, option);
               console.log("selectedProducts:", selectedProducts);
               setSelectProductModalVisible(false);
@@ -267,6 +291,7 @@ const styles = StyleSheet.create({
         width: '100%',
         borderColor: '#25292e',
         textAlign: 'center',
+        alignItems: 'center',
     },
     bottomHeader:{
         flexDirection: 'column',
