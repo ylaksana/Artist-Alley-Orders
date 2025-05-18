@@ -20,7 +20,6 @@ type Props = {
 export default function OrderForm({isVisible, name, phone, address, sale, onClose, onSuccess} : Props) {
   const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [selectProductModalVisible, setSelectProductModalVisible] = useState(false);
-  const [selectMode, setSelectMode] = useState(false);
   const [sum, setSum] = useState(0);
   const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
 
@@ -33,27 +32,12 @@ export default function OrderForm({isVisible, name, phone, address, sale, onClos
             onRequestClose={onClose}
         >
             <View style={styles.container}>
-            {!selectMode && (
-                <View>
                 <Text style={styles.text}>Order Form</Text>
                 <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" />
                 <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
                 <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
-                <Button label="Select Order" theme="primary" onPress={() => setSelectProductModalVisible(true)} />
-                </View>
-                )
-            }
-
-            {selectMode &&(
-                <View>
-                <Text style={styles.text}>Item List</Text>
-                <TextInput style={[styles.textBox, {marginTop:20}]} value={name} placeholder="Enter your name" placeholderTextColor="#888" />
-                <TextInput style={styles.textBox} value={address} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
-                <TextInput style={[styles.textBox, {marginBottom:40}]} value={phone} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
-                <Button label="Submit Order" theme="primary" onPress={() => setWarningModalVisible(true)} />
-                </View>
-                )
-            }
+                <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />/
+                <Button label="Cancel" theme="primary" onPress={() => onClose()} />
             
             <WarningModal
                 isVisible={warningModalVisible}

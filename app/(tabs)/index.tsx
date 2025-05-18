@@ -219,8 +219,9 @@ export default function Index() {
           <FormModal
             isVisible={formModalVisible}
             onClose={() => setFormModalVisible(false)}
-            onSuccess={(name: string, phone: string, address: string, sale: string) => {
-              changeOrderInformation(name, phone, address, sale);
+            onSuccess={(newName: string, newPhone: string, newAddress: string, newSale: string) => {
+              changeOrderInformation(newName, newPhone, newAddress, newSale);
+              console.log(`Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
               setFormModalVisible(false);
             }}
             name = {name}
