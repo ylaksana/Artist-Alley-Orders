@@ -11,17 +11,13 @@ type Props = {
     isVisible: boolean;
     onClose: () => void;
     onSuccess: (name: string, phone: string, address: string, sale: string) => void;
-    name: string;
-    phone: string;
-    address: string;
-    sale: string;
 }
 
-export default function OrderForm({isVisible, name, phone, address, sale, onClose, onSuccess} : Props) {
-  const [warningModalVisible, setWarningModalVisible] = useState(false);
-  const [selectProductModalVisible, setSelectProductModalVisible] = useState(false);
-  const [sum, setSum] = useState(0);
-  const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
+export default function OrderForm({isVisible, onClose, onSuccess} : Props) {
+    const [warningModalVisible, setWarningModalVisible] = useState(false);
+    const [name, setName] = useState<string>("");
+    const [phone, setPhone] = useState<string>("");
+    const [address, setAddress] = useState<string>("");
 
 
     return (
@@ -33,9 +29,9 @@ export default function OrderForm({isVisible, name, phone, address, sale, onClos
         >
             <View style={styles.container}>
                 <Text style={styles.text}>Order Form</Text>
-                <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" />
-                <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" keyboardType="email-address" />
-                <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="name-phone-pad" />
+                <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" placeholderTextColor="#888" onChangeText={setName}/>
+                <TextInput style={styles.textBox} placeholder="Enter your address" placeholderTextColor="#888" onChangeText={setAddress} />
+                <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" placeholderTextColor="#888" keyboardType="phone-pad" onChangeText={setPhone} />
                 <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />/
                 <Button label="Cancel" theme="primary" onPress={() => onClose()} />
             
@@ -43,8 +39,9 @@ export default function OrderForm({isVisible, name, phone, address, sale, onClos
                 isVisible={warningModalVisible}
                 onClose={() => setWarningModalVisible(false)}
                 onSuccess={() => {
+                    console.log("Form submitted with name:", name, "phone:", phone, "address:", address);
                     setWarningModalVisible(false);
-                    onSuccess(name, phone, address, sale);
+                    onSuccess(name, phone, address, "Customer Sale");
                 }}
                 />
 

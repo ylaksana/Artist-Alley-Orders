@@ -37,6 +37,13 @@ export default function Index() {
     // database
     const database = useSQLiteContext();
 
+    // useEffects
+    useEffect(() => {
+      if (name !== 'N/A') {  // Or some other condition to avoid initial render
+        console.log(`Updated state: Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
+      }
+    }, [name, phone, address, sale]);  // This runs whenever these state values change  
+
     // functions
     const headerLeft = () => {
         return(
@@ -142,6 +149,10 @@ export default function Index() {
           
           setSum(0);
           setSelectedProducts([]);
+          setName("N/A");
+          setPhone("N/A");
+          setAddress("N/A");
+          setSale("Convention Sale");
         } catch (error) {
           const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
           alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
@@ -163,6 +174,7 @@ export default function Index() {
         <View style={styles.container}>
             <Stack.Screen options={{headerLeft}}/>
             <Stack.Screen options={{headerRight}}/>
+           
             {selectedProducts.length === 0 && (
               <Text style={styles.title}>Click the plus button to start adding items!</Text>)}
             {selectedProducts.length > 0 && (
@@ -184,6 +196,8 @@ export default function Index() {
                   ))}
                 </View>
             </ScrollView>)}
+
+             {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
 
             <View style={styles.button}>
               <Pressable
@@ -220,19 +234,14 @@ export default function Index() {
             isVisible={formModalVisible}
             onClose={() => setFormModalVisible(false)}
             onSuccess={(newName: string, newPhone: string, newAddress: string, newSale: string) => {
+              console.log(`Name: ${newName}, Phone: ${newPhone}, Address: ${newAddress} Sale: ${newSale}`);
               changeOrderInformation(newName, newPhone, newAddress, newSale);
-              console.log(`Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
               setFormModalVisible(false);
             }}
-            name = {name}
-            phone = {phone}
-            address = {address}
-            sale = {sale}
             />
 
           {sum > 0 && (
             <View style={styles.bottomHeader}>
-              <Text style={styles.sumCounter}>Total: ${sum}</Text>
               <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
               <Pressable
                 style={styles.button} 
