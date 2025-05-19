@@ -113,6 +113,13 @@ export default function Index() {
         setAddress(address);
       }
 
+      const clearCustomerInformation = () => {
+        setName("N/A");
+        setPhone("N/A");
+        setAddress("N/A");
+        setSale("Convention Sale");
+      } 
+
       const storeCustomerInformation = async() =>{
         try{
           const result = await database.runAsync(
@@ -149,10 +156,7 @@ export default function Index() {
           
           setSum(0);
           setSelectedProducts([]);
-          setName("N/A");
-          setPhone("N/A");
-          setAddress("N/A");
-          setSale("Convention Sale");
+          clearCustomerInformation();
         } catch (error) {
           const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
           alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
@@ -248,6 +252,7 @@ export default function Index() {
                 onPress={() => {
                   setSum(0);
                   setSelectedProducts([]);
+                  clearCustomerInformation();
                 }
               }>
                 <Text style={styles.buttonText}>Clear</Text>
