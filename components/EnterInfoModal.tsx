@@ -1,13 +1,16 @@
 import {View, Text, TextInput, Modal, StyleSheet} from 'react-native';
+import { useState } from 'react';
 import Button from '@/components/Button';
 
 type Props = {
     isVisible: boolean;
     onClose: () => void;
-    onSubmit: (name: string, email: string, phone: string) => void;
+    onSuccess: () => void;
 }
 
-export default function EnterInfoModal({ isVisible, onClose, onSubmit } : Props){
+export default function EnterInfoModal({ isVisible, onClose, onSuccess } : Props){
+    const [name, setName] = useState<string>("");
+    
     return(
         <Modal
             animationType="slide"
@@ -19,9 +22,9 @@ export default function EnterInfoModal({ isVisible, onClose, onSubmit } : Props)
                 <TextInput 
                     style={styles.textBox}
                     placeholder="Name"
-                    onChangeText={(text) => onSubmit(text, '', '')}
+                    onChangeText={(text) => setName(text)}
                 />
-                <Button label="Submit" theme="primary" onPress={() => onSubmit('', '', '')} />
+                <Button label="Submit" theme="primary" onPress={() => onSuccess()} />
                 <Button label="Cancel" theme="primary" onPress={onClose} />
             </View>
         </Modal>

@@ -1,10 +1,10 @@
-import {Text, View, StyleSheet, ScrollView, Pressable, FlatList, TouchableOpacity, TextInput, Modal, ActivityIndicator } from 'react-native';
-import { useSQLiteContext, SQLiteDatabase } from 'expo-sqlite';
+import {Text, View, StyleSheet, ScrollView, Pressable} from 'react-native';
+import { useSQLiteContext} from 'expo-sqlite';
 import {useState, useEffect, useCallback} from 'react';
-import { router } from 'expo-router';
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect, Stack} from 'expo-router';
 
-import OrderModal from '@/components/OrderModal';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import EnterInfoModal from '@/components/EnterInfoModal';
 
 export interface DatabaseInfo {
   id: string;
@@ -13,9 +13,18 @@ export interface DatabaseInfo {
 }
 
 export default function DatabaseList() {
+  const headerRight = () => {
+        return(
+          <Pressable onPress={() => setEnterInfoModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
+            <MaterialCommunityIcons name="plus" size={24} color="#ffd33d"/>
+          </Pressable>
+        )
+      }
+
   const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
   const db = useSQLiteContext();
   const [modalVisible, setModalVisible] = useState(false);
+  const [enterInfoModalVisible, setEnterInfoModalVisible] = useState(false);
   const [dbID, setDbID] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,8 +47,9 @@ export default function DatabaseList() {
   // Function to fetch databases
   const fetchDatabases = async () => {}
 
-    return (
+    return (  
         <View style={styles.container}>
+            <Stack.Screen options={{headerRight}}/>
             {databases.length > 0 && 
             (<ScrollView 
                 style={styles.scrollView}
@@ -54,7 +64,22 @@ export default function DatabaseList() {
                 ))}
             </ScrollView>)}
           
-            {databases.length === 0 && (<Text style={styles.text}>{`Convention List\n\nStart recording sales!`}</Text>)}
+            {databases.length === 0 && (
+              <View style={styles.container}>
+                <Text style={[styles.text,{fontSize: 28}]}>Conventions List</Text>
+                <Text>{`\n`}</Text>
+                <Text style={[styles.text]}>No events so far</Text>
+              </View>
+              )}
+
+            <EnterInfoModal
+                isVisible={enterInfoModalVisible}
+                onClose={() => setEnterInfoModalVisible(false)}
+                onSuccess={() => {
+                  alert(`Success`);
+                  setEnterInfoModalVisible(false);
+                }}/>
+             
         </View>
         
     );
@@ -67,11 +92,12 @@ const styles=StyleSheet.create({
         backgroundColor: '#25292e',
         justifyContent: 'center',
         alignItems: 'center',
+
     },
     text:{
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#fff',
+        color: '#6b7178',
     },
     scrollView: {
         backgroundColor: '#25292e',
