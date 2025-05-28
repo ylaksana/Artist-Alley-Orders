@@ -1,18 +1,17 @@
 import {Text, View, StyleSheet, ScrollView, Pressable} from 'react-native';
 import { useSQLiteContext} from 'expo-sqlite';
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect} from 'react';
 import { router, useFocusEffect, Stack} from 'expo-router';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import EnterInfoModal from '@/components/EnterInfoModal';
+import WarningModal from '@/components/WarningModal';
 
 export interface DatabaseInfo {
   id: string;
   name: string;
   createdAt: string;
 }
-
-
 
 export default function DatabaseList() {
   const headerRight = () => {
@@ -26,6 +25,8 @@ export default function DatabaseList() {
   const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
   const db = useSQLiteContext();
   const [enterInfoModalVisible, setEnterInfoModalVisible] = useState(false);
+  const [warningModalVisible, setWarningModalVisible] = useState(false);
+  const [id, setId] = useState<string>('');
 
   // Function to create databases
   const createDatabase = async (name : string) => {
@@ -44,7 +45,17 @@ export default function DatabaseList() {
   }
 
   // Function to delete databases
-  const deleteDatabase = async (id: string) => {}
+  const deleteDatabase = async (id: string) => {
+    try {
+      // console.log("Deleting database with id:", id);
+      // Delete the database with the given id
+      await db.runAsync(`DELETE FROM databases WHERE id = ?`, [id]);
+      // update the databases state
+      fetchDatabases();
+    } catch (error) {
+      console.error("Error deleting database:", error);
+    }
+  }
   
   // Function to fetch databases
   const fetchDatabases = async () => {
@@ -66,7 +77,8 @@ export default function DatabaseList() {
   
   // useEffect for whenever the databases state changes
   useEffect(() => {
-    fetchDatabases();}
+    fetchDatabases();
+  }
   , [databases]);
 
     return (  
@@ -80,6 +92,15 @@ export default function DatabaseList() {
                     <View key={order.id} style={styles.cell}>
                         <Pressable>
                             <Text style={styles.text}>{`${order.name} - ${order.id}`}</Text>
+                        </Pressable>
+                        <Pressable 
+                          onPress={() => {
+                            setId(order.id);
+                            // console.log("Deleting database with id:", id);
+                            setWarningModalVisible(true);   
+                          }}
+                        >
+                            <MaterialCommunityIcons name="delete" size={24} color="#ffd33d"/>
                         </Pressable>
                     </View>
                 
@@ -102,6 +123,18 @@ export default function DatabaseList() {
                   fetchDatabases();
                   setEnterInfoModalVisible(false);
                 }}/>
+            
+            <WarningModal
+                isVisible={warningModalVisible}
+                onClose={() => {setWarningModalVisible(false);}}
+                onSuccess={() => {
+                  // console.log("Deleting database with id:", id);
+                  deleteDatabase(id);
+                  setWarningModalVisible(false);
+                }}
+              />
+                
+
              
         </View>
         
@@ -128,12 +161,15 @@ const styles=StyleSheet.create({
         flex:1,
     },
     cell: {
-        padding: 15,
-        marginBottom: 10,
-        backgroundColor: '#25292e',
-        borderRadius: 5,
-        borderWidth: 1,
-        borderColor: '#525961', // Change this color to modify the border colo
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      marginBottom: 10,
+      backgroundColor: '#25292e',
+      borderRadius: 5,
+      borderWidth: 1,
+      borderColor: '#525961',
     },
 
 });
