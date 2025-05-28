@@ -12,6 +12,8 @@ export interface DatabaseInfo {
   createdAt: string;
 }
 
+
+
 export default function DatabaseList() {
   const headerRight = () => {
         return(
@@ -30,23 +32,42 @@ export default function DatabaseList() {
     try {
       const date = new Date().toISOString();
       let dateMDY = `${date.slice(5, 10)}-${date.slice(0, 4)}`;
-      console.log(`name: ${name}, date: ${dateMDY}`);
-      // await db.runAsync(
-      //   `INSERT INTO databases (name, createdAt) VALUES (?, ?, ?)`,
-      //   [name, new Date().toISOString()]
-      // );
+
+      // console.log(`name: ${name}, date: ${dateMDY}`);
+      await db.runAsync(
+        `INSERT INTO databases (name, createdAt) VALUES (?, ?)`,
+        [name, dateMDY]
+      );
     } catch (error) {
       console.error("Error creating database:", error);
     }
   }
 
+  // Function to delete databases
   const deleteDatabase = async (id: string) => {}
+  
+  // Function to fetch databases
+  const fetchDatabases = async () => {
+      // Fetch all databases from the database
+      const result = await db.getAllAsync<DatabaseInfo>(`SELECT * FROM databases`);
+      // Merge with existing databases
+      const updatedResult = result.map(database => {
+        return database;
+      });
+    
+      // Update the data state with the merged information
+      setDatabases(updatedResult);
+      
+  
+    };
 
   // Function to navigate to selecteddatabase
   const navigateToDatabase = (db: DatabaseInfo) => {}
   
-  // Function to fetch databases
-  const fetchDatabases = async () => {}
+  // useEffect for whenever the databases state changes
+  useEffect(() => {
+    fetchDatabases();}
+  , [databases]);
 
     return (  
         <View style={styles.container}>
@@ -58,7 +79,7 @@ export default function DatabaseList() {
                 {databases.map((order) =>(
                     <View key={order.id} style={styles.cell}>
                         <Pressable>
-                            <Text style={styles.text}>{order.name}</Text>
+                            <Text style={styles.text}>{`${order.name} - ${order.id}`}</Text>
                         </Pressable>
                     </View>
                 
@@ -78,6 +99,7 @@ export default function DatabaseList() {
                 onClose={() => setEnterInfoModalVisible(false)}
                 onSuccess={(name: string) => {
                   createDatabase(name);
+                  fetchDatabases();
                   setEnterInfoModalVisible(false);
                 }}/>
              
