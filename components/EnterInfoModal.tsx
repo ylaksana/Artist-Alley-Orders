@@ -5,7 +5,7 @@ import Button from '@/components/Button';
 type Props = {
     isVisible: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (name: string) => void;
 }
 
 export default function EnterInfoModal({ isVisible, onClose, onSuccess } : Props){
@@ -24,7 +24,7 @@ export default function EnterInfoModal({ isVisible, onClose, onSuccess } : Props
                     placeholder="Name"
                     onChangeText={(text) => setName(text)}
                 />
-                <Button label="Submit" theme="primary" onPress={() => onSuccess()} />
+                <Button label="Submit" theme="primary" onPress={() => onSuccess(name)} />
                 <Button label="Cancel" theme="primary" onPress={onClose} />
             </View>
         </Modal>

@@ -20,26 +20,27 @@ export default function DatabaseList() {
           </Pressable>
         )
       }
-
+      
   const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
   const db = useSQLiteContext();
-  const [modalVisible, setModalVisible] = useState(false);
   const [enterInfoModalVisible, setEnterInfoModalVisible] = useState(false);
-  const [dbID, setDbID] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Function to create databases
-  const createDatabase = async () => {
+  const createDatabase = async (name : string) => {
     try {
-      await db.runAsync(
-        `INSERT INTO databases (name, createdAt) VALUES (?, ?, ?)`,
-        ["New Database", new Date().toISOString()]
-      );
+      const date = new Date().toISOString();
+      let dateMDY = `${date.slice(5, 10)}-${date.slice(0, 4)}`;
+      console.log(`name: ${name}, date: ${dateMDY}`);
+      // await db.runAsync(
+      //   `INSERT INTO databases (name, createdAt) VALUES (?, ?, ?)`,
+      //   [name, new Date().toISOString()]
+      // );
     } catch (error) {
       console.error("Error creating database:", error);
-      setLoading(false);
     }
   }
+
+  const deleteDatabase = async (id: string) => {}
 
   // Function to navigate to selecteddatabase
   const navigateToDatabase = (db: DatabaseInfo) => {}
@@ -75,8 +76,8 @@ export default function DatabaseList() {
             <EnterInfoModal
                 isVisible={enterInfoModalVisible}
                 onClose={() => setEnterInfoModalVisible(false)}
-                onSuccess={() => {
-                  alert(`Success`);
+                onSuccess={(name: string) => {
+                  createDatabase(name);
                   setEnterInfoModalVisible(false);
                 }}/>
              
