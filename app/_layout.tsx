@@ -28,6 +28,8 @@ export default function RootLayout() {
             name TEXT,
             email TEXT,
             price REAL
+            db_id INTEGER,
+            FOREIGN KEY (db_id) REFERENCES databases(id) 
           );`
         );
       console.log("Orders table created successfully.");
@@ -37,10 +39,8 @@ export default function RootLayout() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER,
           product TEXT,
-          db_id INTEGER,
           count INTEGER,
           FOREIGN KEY (user_id) REFERENCES orders(id)
-          FOREIGN KEY (db_id) REFERENCES databases(id)
         );`
       );
       console.log("Sold products table created successfully.");
@@ -63,8 +63,7 @@ export default function RootLayout() {
         `CREATE TABLE IF NOT EXISTS databases (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT,
-          createdAt TEXT,
-          description TEXT
+          createdAt TEXT
         );`
       );
       console.log("Databases table created successfully.");

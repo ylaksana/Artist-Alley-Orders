@@ -47,20 +47,6 @@ export default function TabsLayout() {
           }} 
         />
  
-
-        <Tabs.Screen
-            name="database-list"
-            options={{ 
-            title:"Database List",
-            tabBarIcon: ({focused, color}) => (
-                <Ionicons 
-                    name={focused ? "list" : "list-outline"}
-                    color={color}
-                    size={24}
-                />
-            ),
-          }} 
-        />
         
         </Tabs>
       

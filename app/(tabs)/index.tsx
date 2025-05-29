@@ -1,8 +1,8 @@
-import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput } from "react-native";
+import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput} from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
-import { Stack, useFocusEffect } from "expo-router";
+import { Stack, useFocusEffect, useLocalSearchParams} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, } from "react";
 
 import SelectProductModal from "@/components/SelectProductModal";
 import WarningModal from "@/components/WarningModal";
@@ -33,6 +33,28 @@ export default function Index() {
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState(0);
     const [editMode, setEditMode] = useState(false);
+    
+    // router params
+    const router = useLocalSearchParams<{ databaseId?: string }>();
+
+    // insert database id from the router to the database
+    const insertDatabaseId = async () => {
+      const databaseId = router.databaseId;
+      if (databaseId) {
+        try {
+          const db = useSQLiteContext();
+          await db.runAsync(
+            "INSERT INTO orders (db_id) VALUES (?)",
+            [databaseId]
+          );
+          console.log("Database ID inserted successfully:", databaseId);
+        } catch (error) {
+          console.error("Error inserting database ID:", error);
+        }
+      } else {
+        console.warn("No database ID found in router params.");
+      }
+    }
 
     // database
     const database = useSQLiteContext();
@@ -43,6 +65,11 @@ export default function Index() {
         console.log(`Updated state: Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
       }
     }, [name, phone, address, sale]);  // This runs whenever these state values change  
+
+    useEffect(() => {
+      // Insert the database ID when the component mounts
+      insertDatabaseId();
+    }, []);
 
     // functions
     const headerLeft = () => {

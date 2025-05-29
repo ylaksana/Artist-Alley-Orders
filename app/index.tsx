@@ -73,7 +73,14 @@ export default function DatabaseList() {
     };
 
   // Function to navigate to selecteddatabase
-  const navigateToDatabase = (db: DatabaseInfo) => {}
+  const navigateToDatabase = (dbID: string) => {
+    router.push({
+      pathname: '/(tabs)',
+      params: { 
+        selectedDatabaseId: dbID
+      }
+    });
+  }
   
   // useEffect for whenever the databases state changes
   useEffect(() => {
@@ -83,7 +90,18 @@ export default function DatabaseList() {
 
     return (  
         <View style={styles.container}>
-            <Stack.Screen options={{headerRight}}/>
+            <Stack.Screen   
+              options={{
+                headerRight,
+                title: "Select Convention",
+                headerStyle: {
+                  backgroundColor: "#25292e", 
+                },
+                headerTintColor: "#fff",
+                headerShadowVisible: false, // Removes the shadow/border under header
+                
+                }}
+            />
             {databases.length > 0 && 
             (<ScrollView 
                 style={styles.scrollView}
@@ -93,15 +111,26 @@ export default function DatabaseList() {
                         <Pressable>
                             <Text style={styles.text}>{`${order.name} - ${order.id}`}</Text>
                         </Pressable>
-                        <Pressable 
-                          onPress={() => {
-                            setId(order.id);
-                            // console.log("Deleting database with id:", id);
-                            setWarningModalVisible(true);   
-                          }}
-                        >
-                            <MaterialCommunityIcons name="delete" size={24} color="#ffd33d"/>
-                        </Pressable>
+                        <View style={styles.cellOptions}>
+                          <Pressable 
+                            style={styles.button}
+                            onPress={() => {
+                                // router navigate to the database details page
+                                navigateToDatabase(order.id);
+                            }}>
+                                <Text style={styles.buttonText}>Open</Text>
+                          </Pressable>
+                            <Pressable 
+                              style={styles.button}
+                              onPress={() => {
+                                setId(order.id);
+                                // console.log("Deleting database with id:", id);
+                                setWarningModalVisible(true);   
+                              }}
+                            >
+                              <Text style={styles.buttonText}>Delete</Text>
+                            </Pressable>
+                        </View>
                     </View>
                 
                 ))}
@@ -153,7 +182,7 @@ const styles=StyleSheet.create({
     text:{
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#6b7178',
+        color: '#fff',
     },
     scrollView: {
         backgroundColor: '#25292e',
@@ -161,7 +190,7 @@ const styles=StyleSheet.create({
         flex:1,
     },
     cell: {
-      flexDirection: 'row',
+      flexDirection: 'column',
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: 15,
@@ -170,6 +199,33 @@ const styles=StyleSheet.create({
       borderRadius: 5,
       borderWidth: 1,
       borderColor: '#525961',
+    },
+    cellOptions:{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      marginTop: 10,
+    },
+    button: {
+      backgroundColor: '#ffd33d',
+      padding:5,
+      alignItems: 'center',
+      borderRadius: 5,
+      marginTop: 10,
+      width: 120,
+      marginHorizontal: 5,
+    },
+    buttonText: {
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: 20,
+      borderColor: '#000',
+      paddingVertical: 5,
+      width: '100%',
+      borderWidth: 4,
+      borderRadius: 5,
+      textAlign: 'center',
     },
 
 });
