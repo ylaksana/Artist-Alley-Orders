@@ -6,12 +6,9 @@ import { router, useFocusEffect, Stack} from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import EnterInfoModal from '@/components/EnterInfoModal';
 import WarningModal from '@/components/WarningModal';
+import { DatabaseInfo } from '@/unused/old-database-list';
+import { useDatabaseContext } from './_layout';
 
-export interface DatabaseInfo {
-  id: string;
-  name: string;
-  createdAt: string;
-}
 
 export default function DatabaseList() {
   const headerRight = () => {
@@ -27,6 +24,7 @@ export default function DatabaseList() {
   const [enterInfoModalVisible, setEnterInfoModalVisible] = useState(false);
   const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [id, setId] = useState<string>('');
+  const { setSelectedDatabase } = useDatabaseContext();
 
   // Function to create databases
   const createDatabase = async (name : string) => {
@@ -73,12 +71,19 @@ export default function DatabaseList() {
     };
 
   // Function to navigate to selecteddatabase
-  const navigateToDatabase = (dbID: string) => {
+  const navigateToDatabase = (database: DatabaseInfo) => {
     // console.log("Navigating to database with id:", dbID);
-    router.push({
-        pathname: '/(tabs)',
-        params: {databaseId: dbID}
+    console.log("Selecting database:", database);
+    
+    // Set the database in context
+    setSelectedDatabase({
+      id: database.id,
+      name: database.name,
+      createdAt: database.createdAt
     });
+    
+    // Navigate to tabs
+    router.push('/(tabs)');
   }
   
   // useEffect for whenever the databases state changes
@@ -115,7 +120,7 @@ export default function DatabaseList() {
                             style={styles.button}
                             onPress={() => {
                                 // router navigate to the database details page
-                                navigateToDatabase(order.id);
+                                navigateToDatabase(order);
                             }}>
                                 <Text style={styles.buttonText}>Open</Text>
                           </Pressable>

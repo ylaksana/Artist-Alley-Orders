@@ -10,6 +10,7 @@ import FormModal from "@/components/FormModal";
 import Button from "@/components/Button"; // Adjust the path as necessary
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useDatabaseContext } from "../_layout";
 
 export type ProductType = {
     id: number;
@@ -33,51 +34,18 @@ export default function Index() {
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState(0);
     const [editMode, setEditMode] = useState(false);
-    
-    // router params
-    // Fix 1: Use the correct parameter name that matches what you're passing
-    const { selectedDatabaseId } = useLocalSearchParams();
+    const { selectedDatabase } = useDatabaseContext();
     
     // Get database context
     const database = useSQLiteContext();
-    
-    // Convert to string if it's an array
-    const params = useLocalSearchParams<{
-      databaseId: string;
-    }>();
-
-    // insert database id from the router to the database
-    const insertDatabaseId = async () => {
-      console.log("Inserting database ID from router params:", params.databaseId);
-      // const databaseId = params.databaseId
-      // if (databaseId) {
-      //   try {
-      //     const db = useSQLiteContext();
-      //     await db.runAsync(
-      //       "INSERT INTO orders (db_id) VALUES (?)",
-      //       [databaseId]
-      //     );
-      //     console.log("Database ID inserted successfully:", databaseId);
-      //   } catch (error) {
-      //     console.error("Error inserting database ID:", error);
-      //   }
-      // } else {
-      //   console.warn("No database ID found in router params.");
-      // }
-    }
-
 
     // useEffects
     useEffect(() => {
       if (name !== 'N/A') {  // Or some other condition to avoid initial render
-        console.log(`Updated state: Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
+        // console.log(`Updated state: Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
       }
+      console.log(`Selected database: ${selectedDatabase?.name}`);
     }, [name, phone, address, sale]);  // This runs whenever these state values change  
-
-    useEffect(() => {
-      insertDatabaseId();
-    }, []);
-
 
 
     // functions
@@ -115,7 +83,7 @@ export default function Index() {
       const addProductToList = (product: ProductType, option: string) => {
         // create product object with the selected product
         const newProduct = {...product};
-        console.log("newProduct:", newProduct);
+        // console.log("newProduct:", newProduct);
         
         // check if the product has options, if so change the name
         console.log("option:", option);
@@ -126,7 +94,7 @@ export default function Index() {
 
         // check if the product is already in the selectedProducts array
         const index = selectedProducts.findIndex(item => item.name === newProduct.name)
-        console.log("index:", index);
+        // console.log("index:", index);
 
         // if the product is not in the array, add it
         if(index === -1){ 

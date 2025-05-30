@@ -1,11 +1,13 @@
 import { Tabs } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useDatabaseContext } from "../_layout";
 
 export default function TabsLayout() {
+  const { selectedDatabase } = useDatabaseContext();
   return (
       <Tabs
         screenOptions={{
-            headerTitle: "PeiTrishaWorks Sales",
+            headerTitle: `${selectedDatabase?.name}`,
             headerTitleAlign: "center",
             tabBarActiveTintColor: "#ffd33d",
             headerStyle: {

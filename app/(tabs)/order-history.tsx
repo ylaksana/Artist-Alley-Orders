@@ -1,9 +1,12 @@
 import {Text, View, StyleSheet, ScrollView, Pressable} from 'react-native';
-import { useSQLiteContext, SQLiteDatabase } from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useLocalSearchParams } from 'expo-router';
 import {useState, useEffect, useCallback} from 'react';
 import { useFocusEffect } from "expo-router";
 
 import OrderModal from '@/components/OrderModal';
+import { useDatabaseContext } from '../_layout';
+
 
 export type OrderType ={
     id: number;
@@ -23,10 +26,15 @@ export type ProductItem = {
 }
 
 export default function OrderHistoryScreen() {
+    const { selectedDatabase } = useDatabaseContext();
     const [orderModalVisible, setOrderModalVisible] = useState(false);
     const [data, setData] = useState<OrderType[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const database = useSQLiteContext();
+
+    
+
+    console.log('Order History - Selected Database:', selectedDatabase);
 
     useFocusEffect(
         useCallback(() => {
@@ -36,21 +44,37 @@ export default function OrderHistoryScreen() {
         , [])
     );
     
-    // const updateOrderTable = async () => {
-    //     try {
-    //         await database.runAsync(
-    //             `ALTER TABLE orders
-    //             ADD COLUMN phone REAL DEFAULT 0`
-    //         );
-    //         console.log("Successfully added column phone to orders table.");
-    //     } catch (error) {
-    //         console.error("Error adding phone to table:", error);
-    //     }
-    // }
+    const updateOrderTable = async () => {
+        try {
+             if (!selectedDatabase) {    
+                console.warn('No database selected in Order History');
+                setData([]);
+                return; // Exit early
+            }
+                    await database.runAsync(
+                `ALTER TABLE orders
+                ADD COLUMN db_id`
+            );
+            console.log("Successfully added column db_id to orders table.");
+            await database.runAsync(
+                `UPDATE orders
+                SET db_id = ?`,
+                [selectedDatabase?.id]
+            );
+        } catch (error) {
+            console.error("Error adding phone to table:", error);
+        }
+    }
 
     const loadData = async () => {
-        const result = await database.getAllAsync<OrderType>(`SELECT * FROM orders`);
-        console.log("Orders loaded:", result); // Check what data is being returned
+        if (!selectedDatabase) {    
+        console.warn('No database selected in Order History');
+        setData([]);
+        return; // Exit early
+    }
+        const result = await database.getAllAsync<OrderType>(`SELECT * FROM orders WHERE db_id = ?`, [selectedDatabase.id]);
+        // Uncomment the line below to log the result for debugging
+        console.log("Orders loaded:", result);
         setData(result);
     };
 
@@ -70,7 +94,7 @@ export default function OrderHistoryScreen() {
           const allProducts = await database.getAllAsync(
             `SELECT * FROM sold_products`
           );
-          console.log("All sold products:", allProducts);
+        //   console.log("All sold products:", allProducts);
         } catch (error) {
           console.error("Error checking sold products:", error);
         }
@@ -79,7 +103,7 @@ export default function OrderHistoryScreen() {
     const openOrder = async (order: OrderType) => {
         try{
             const result = await database.getAllAsync<ProductItem>(`SELECT * FROM sold_products WHERE user_id = ?`, [order.id]);
-            console.log("Order products:", result); // Check what products are returned
+            // console.log("Order products:", result);
             order.list = result;
             setSelectedOrder(order);
             setOrderModalVisible(true);
@@ -88,6 +112,16 @@ export default function OrderHistoryScreen() {
             alert(`Error fetching order details: ${error}`);
         }
     }
+
+    const logDatabaseID = () => {
+        console.log("Current Database ID:", selectedDatabase?.id);  
+    }
+    
+
+    useEffect(() => {
+        updateOrderTable();
+        logDatabaseID();
+    }, []);
 
     return (
         <View style={styles.container}>

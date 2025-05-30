@@ -1,9 +1,60 @@
+// app/_layout.tsx (Root Layout with Inline Context)
 import { Stack } from "expo-router";
 import {LogBox} from 'react-native';
 import { StatusBar } from "expo-status-bar";
 import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 LogBox.ignoreAllLogs(true);
+
+// Database Context defined right here in the layout file
+interface DatabaseInfo {
+  id: string;
+  name: string;
+  createdAt?: string;
+}
+
+interface DatabaseContextType {
+  selectedDatabase: DatabaseInfo | null;
+  setSelectedDatabase: (database: DatabaseInfo) => void;
+  clearSelectedDatabase: () => void;
+}
+
+const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
+
+// Custom hook to use the context
+export function useDatabaseContext() {
+  const context = useContext(DatabaseContext);
+  if (context === undefined) {
+    throw new Error('useDatabaseContext must be used within the app');
+  }
+  return context;
+}
+
+// Database Provider Component (inline)
+function DatabaseProvider({ children }: { children: ReactNode }) {
+  const [selectedDatabase, setSelectedDatabaseState] = useState<DatabaseInfo | null>(null);
+
+  const setSelectedDatabase = (database: DatabaseInfo) => {
+    console.log('Setting selected database:', database);
+    setSelectedDatabaseState(database);
+  };
+
+  const clearSelectedDatabase = () => {
+    console.log('Clearing selected database');
+    setSelectedDatabaseState(null);
+  };
+
+  return (
+    <DatabaseContext.Provider value={{
+      selectedDatabase,
+      setSelectedDatabase,
+      clearSelectedDatabase
+    }}>
+      {children}
+    </DatabaseContext.Provider>
+  );
+}
 
 export default function RootLayout() {
   const createDBIfNeeded = async (db:SQLiteDatabase) => {
@@ -72,8 +123,8 @@ export default function RootLayout() {
 
   return (
     <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
-      <>
-      <StatusBar style="light" backgroundColor="#25292e"/>
+      <DatabaseProvider>
+        <StatusBar style="light" backgroundColor="#25292e"/>
         <Stack
           screenOptions={{
             headerStyle: {
@@ -83,16 +134,14 @@ export default function RootLayout() {
             headerShadowVisible: false,
           }}
         >
-          {/* Database list screen - FIRST SCREEN (main entry point) */}
           <Stack.Screen 
             name="index" 
             options={{ 
               headerShown: true,
-              title: "Select Convention",
+              title: "Select Database",
             }} 
           />
           
-          {/* Tabbed interface - SECOND SCREEN (after selecting database) */}
           <Stack.Screen 
             name="(tabs)" 
             options={{ 
@@ -100,7 +149,7 @@ export default function RootLayout() {
             }} 
           />
         </Stack>
-      </>
+      </DatabaseProvider>
     </SQLiteProvider>
   );
 }
