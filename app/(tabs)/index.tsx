@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput} from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
-import { Stack, useFocusEffect, useLocalSearchParams} from "expo-router";
+import { Stack, useFocusEffect, useLocalSearchParams, router} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useState, useCallback, useEffect, } from "react";
 
@@ -34,7 +34,7 @@ export default function Index() {
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState(0);
     const [editMode, setEditMode] = useState(false);
-    const { selectedDatabase } = useDatabaseContext();
+    const { selectedDatabase, clearSelectedDatabase } = useDatabaseContext();
     
     // Get database context
     const database = useSQLiteContext();
@@ -125,15 +125,20 @@ export default function Index() {
       } 
 
       const storeCustomerInformation = async() =>{
+        if (!selectedDatabase) {
+          console.warn('No database selected');
+          return;
+        }
         try{
           const result = await database.runAsync(
-            "INSERT INTO orders (type, name, email, price, phone) VALUES(?, ?, ?, ?, ?)",
+            "INSERT INTO orders (type, name, email, price, phone, db_id) VALUES(?, ?, ?, ?, ?)",
             [
               sale,
               name,
               address,
               sum,
-              phone
+              phone,
+              selectedDatabase.id
             ]
           );
     
@@ -178,6 +183,11 @@ export default function Index() {
         }
       }
 
+      const switchConvention = () => {
+        clearSelectedDatabase();
+        router.back();
+      }
+
     return (
         <View style={styles.container}>
             <Stack.Screen options={{headerLeft}}/>
@@ -207,14 +217,28 @@ export default function Index() {
 
              {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
 
-            <View style={styles.button}>
-              <Pressable
-               style={styles.buttonText}
-               onPress={() => setSelectProductModalVisible(true)}
-               >
-                <Feather name="plus" size={24} color="#25292e"/>
-              </Pressable>
+            <View style={styles.buttonContainer}>
+               <View style={styles.button}>
+                <Pressable
+                style={styles.buttonText}
+                onPress={() => setSelectProductModalVisible(true)}
+                >
+                  <Feather name="plus" size={24} color="#25292e"/>
+                </Pressable>
+              </View>
+
+              <View style={styles.button}>
+                <Pressable
+                    style={styles.buttonText}
+                    onPress={() => {
+                      switchConvention();
+                    }}
+                    >
+                    <Text>Switch Convention</Text>
+                </Pressable>
+              </View>
             </View>
+           
             
           <SelectProductModal
             isVisible={SelectProductModalVisible}
@@ -311,6 +335,7 @@ const styles = StyleSheet.create({
         width: 320,
         borderRadius: 10,
         alignItems: 'center',
+        marginVertical: 5,
     },
     buttonText: {
         color: '#000',
@@ -342,5 +367,12 @@ const styles = StyleSheet.create({
       borderRadius: 5,
       padding: 10,
       margin: 10,
+    },
+    buttonContainer:{
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      padding: 10,
     }
 });
