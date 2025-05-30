@@ -35,29 +35,37 @@ export default function Index() {
     const [editMode, setEditMode] = useState(false);
     
     // router params
-    const router = useLocalSearchParams<{ databaseId?: string }>();
+    // Fix 1: Use the correct parameter name that matches what you're passing
+    const { selectedDatabaseId } = useLocalSearchParams();
+    
+    // Get database context
+    const database = useSQLiteContext();
+    
+    // Convert to string if it's an array
+    const params = useLocalSearchParams<{
+      databaseId: string;
+    }>();
 
     // insert database id from the router to the database
     const insertDatabaseId = async () => {
-      const databaseId = router.databaseId;
-      if (databaseId) {
-        try {
-          const db = useSQLiteContext();
-          await db.runAsync(
-            "INSERT INTO orders (db_id) VALUES (?)",
-            [databaseId]
-          );
-          console.log("Database ID inserted successfully:", databaseId);
-        } catch (error) {
-          console.error("Error inserting database ID:", error);
-        }
-      } else {
-        console.warn("No database ID found in router params.");
-      }
+      console.log("Inserting database ID from router params:", params.databaseId);
+      // const databaseId = params.databaseId
+      // if (databaseId) {
+      //   try {
+      //     const db = useSQLiteContext();
+      //     await db.runAsync(
+      //       "INSERT INTO orders (db_id) VALUES (?)",
+      //       [databaseId]
+      //     );
+      //     console.log("Database ID inserted successfully:", databaseId);
+      //   } catch (error) {
+      //     console.error("Error inserting database ID:", error);
+      //   }
+      // } else {
+      //   console.warn("No database ID found in router params.");
+      // }
     }
 
-    // database
-    const database = useSQLiteContext();
 
     // useEffects
     useEffect(() => {
@@ -67,9 +75,10 @@ export default function Index() {
     }, [name, phone, address, sale]);  // This runs whenever these state values change  
 
     useEffect(() => {
-      // Insert the database ID when the component mounts
       insertDatabaseId();
     }, []);
+
+
 
     // functions
     const headerLeft = () => {

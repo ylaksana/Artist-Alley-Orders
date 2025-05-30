@@ -74,11 +74,10 @@ export default function DatabaseList() {
 
   // Function to navigate to selecteddatabase
   const navigateToDatabase = (dbID: string) => {
+    // console.log("Navigating to database with id:", dbID);
     router.push({
-      pathname: '/(tabs)',
-      params: { 
-        selectedDatabaseId: dbID
-      }
+        pathname: '/(tabs)',
+        params: {databaseId: dbID}
     });
   }
   

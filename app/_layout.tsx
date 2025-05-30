@@ -73,15 +73,32 @@ export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
       <>
-      <StatusBar style="light"/>
-        <Stack>
+      <StatusBar style="light" backgroundColor="#25292e"/>
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#25292e',
+            },
+            headerTintColor: '#fff',
+            headerShadowVisible: false,
+          }}
+        >
+          {/* Database list screen - FIRST SCREEN (main entry point) */}
+          <Stack.Screen 
+            name="index" 
+            options={{ 
+              headerShown: true,
+              title: "Select Convention",
+            }} 
+          />
+          
+          {/* Tabbed interface - SECOND SCREEN (after selecting database) */}
           <Stack.Screen 
             name="(tabs)" 
             options={{ 
               headerShown: false,
             }} 
           />
-
         </Stack>
       </>
     </SQLiteProvider>
