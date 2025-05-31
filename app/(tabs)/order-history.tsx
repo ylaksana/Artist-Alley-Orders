@@ -74,12 +74,12 @@ export default function OrderHistoryScreen() {
     //             return; // Exit early
     //         }
     //                 await database.runAsync(
-    //             `ALTER TABLE orders
+    //             `ALTER TABLE sold_products
     //             ADD COLUMN db_id`
     //         );
     //         console.log("Successfully added column db_id to orders table.");
     //         await database.runAsync(
-    //             `UPDATE orders
+    //             `UPDATE sold_products
     //             SET db_id = ?`,
     //             [selectedDatabase?.id]
     //         );

@@ -149,11 +149,12 @@ export default function Index() {
               try {
                 // Fixed SQL query with closing parenthesis
                 await database.runAsync(
-                  "INSERT INTO sold_products (user_id, product, count) VALUES(?, ?, ?)",
+                  "INSERT INTO sold_products (user_id, product, count, db_id) VALUES(?, ?, ?, ?)",
                   [
                     orderId,
                     product.name,
-                    product.count
+                    product.count,
+                    selectedDatabase.id
                   ]
                 );
                 console.log("Saved product:", product.name, "with count:", product.count);

@@ -45,19 +45,31 @@ export default function DatabaseList() {
   // Function to delete databases
   const deleteDatabase = async (id: string) => {
     try {
-      const result = await db.getAllAsync(`SELECT * FROM sold_products`);
+
+      const result = await db.getAllAsync(`SELECT * FROM sold_products WHERE db_id = ?`, [id]);
       console.log("Orders associated with db_id:", id, result);
-      // // Delete all products associated with the database
-      // await db.runAsync(`DELETE FROM sold_products WHERE db_id = ?`, [id]);
-      // console.log("Deleting sold products with db_id:", id);
-      // // Delete all orders associated with the database
-      // await db.runAsync(`DELETE FROM orders WHERE db_id = ?`, [id]);
-      // console.log("Deleting orders with db_id:", id);
-      // // Delete the database with the given id
-      // await db.runAsync(`DELETE FROM databases WHERE id = ?`, [id]);
-      // console.log("Deleting database with id:", id);
-      // // update the databases state
-      // fetchDatabases();
+      
+      // Delete all products associated with the database
+      await db.runAsync(`DELETE FROM sold_products WHERE db_id = ?`, [id]);
+      console.log("Deleting sold products with db_id:", id);
+      
+      // Delete all orders associated with the database
+      await db.runAsync(`DELETE FROM orders WHERE db_id = ?`, [id]);
+      console.log("Deleting orders with db_id:", id);
+      
+      // Delete the database with the given id
+      await db.runAsync(`DELETE FROM databases WHERE id = ?`, [id]);
+      console.log("Deleting database with id:", id);
+
+      // Check to see if the deletion was successful
+      const check = await db.getAllAsync(`SELECT * FROM sold_products WHERE id = ?`, [id]);
+      const check2 = await db.getAllAsync(`SELECT * FROM orders WHERE id = ?`, [id]);
+      console.log("Check sold products after deletion:", check.length);
+      console.log("Check orders after deletion:", check2.length);
+      
+      // update the databases state
+      fetchDatabases();
+    
     } catch (error) {
       console.error("Error deleting database:", error);
     }
