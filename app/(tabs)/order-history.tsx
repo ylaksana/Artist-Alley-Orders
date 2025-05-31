@@ -66,27 +66,27 @@ export default function OrderHistoryScreen() {
         }
     }
 
-    const updateOrderTable = async () => {
-        try {
-             if (!selectedDatabase) {    
-                console.warn('No database selected in Order History');
-                setData([]);
-                return; // Exit early
-            }
-                    await database.runAsync(
-                `ALTER TABLE orders
-                ADD COLUMN db_id`
-            );
-            console.log("Successfully added column db_id to orders table.");
-            await database.runAsync(
-                `UPDATE orders
-                SET db_id = ?`,
-                [selectedDatabase?.id]
-            );
-        } catch (error) {
-            console.error("Error adding phone to table:", error);
-        }
-    }
+    // const updateOrderTable = async () => {
+    //     try {
+    //          if (!selectedDatabase) {    
+    //             console.warn('No database selected in Order History');
+    //             setData([]);
+    //             return; // Exit early
+    //         }
+    //                 await database.runAsync(
+    //             `ALTER TABLE orders
+    //             ADD COLUMN db_id`
+    //         );
+    //         console.log("Successfully added column db_id to orders table.");
+    //         await database.runAsync(
+    //             `UPDATE orders
+    //             SET db_id = ?`,
+    //             [selectedDatabase?.id]
+    //         );
+    //     } catch (error) {
+    //         console.error("Error adding phone to table:", error);
+    //     }
+    // }
 
     const loadData = async () => {
         if (!selectedDatabase) {    
@@ -141,7 +141,7 @@ export default function OrderHistoryScreen() {
     
 
     useEffect(() => {
-        updateOrderTable();
+        // updateOrderTable();
         logDatabaseID();
     }, []);
 

@@ -131,7 +131,7 @@ export default function Index() {
         }
         try{
           const result = await database.runAsync(
-            "INSERT INTO orders (type, name, email, price, phone, db_id) VALUES(?, ?, ?, ?, ?)",
+            "INSERT INTO orders (type, name, email, price, phone, db_id) VALUES(?, ?, ?, ?, ?, ?)",
             [
               sale,
               name,

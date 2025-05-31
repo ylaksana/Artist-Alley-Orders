@@ -45,11 +45,19 @@ export default function DatabaseList() {
   // Function to delete databases
   const deleteDatabase = async (id: string) => {
     try {
+      const result = await db.getAllAsync(`SELECT * FROM sold_products`);
+      console.log("Orders associated with db_id:", id, result);
+      // // Delete all products associated with the database
+      // await db.runAsync(`DELETE FROM sold_products WHERE db_id = ?`, [id]);
+      // console.log("Deleting sold products with db_id:", id);
+      // // Delete all orders associated with the database
+      // await db.runAsync(`DELETE FROM orders WHERE db_id = ?`, [id]);
+      // console.log("Deleting orders with db_id:", id);
+      // // Delete the database with the given id
+      // await db.runAsync(`DELETE FROM databases WHERE id = ?`, [id]);
       // console.log("Deleting database with id:", id);
-      // Delete the database with the given id
-      await db.runAsync(`DELETE FROM databases WHERE id = ?`, [id]);
-      // update the databases state
-      fetchDatabases();
+      // // update the databases state
+      // fetchDatabases();
     } catch (error) {
       console.error("Error deleting database:", error);
     }
