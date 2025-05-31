@@ -91,6 +91,8 @@ export default function RootLayout() {
           user_id INTEGER,
           product TEXT,
           count INTEGER,
+          db_id INTEGER,
+          FOREIGN KEY (db_id) REFERENCES databases(id),
           FOREIGN KEY (user_id) REFERENCES orders(id)
         );`
       );

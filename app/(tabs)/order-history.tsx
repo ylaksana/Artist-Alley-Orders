@@ -44,6 +44,28 @@ export default function OrderHistoryScreen() {
         , [])
     );
     
+    const updateSoldProductsTable = async () => {
+        try {
+            if (!selectedDatabase) {    
+                console.warn('No database selected in Order History');
+                setData([]);
+                return; // Exit early
+            }
+            await database.runAsync(
+                `ALTER TABLE sold_products
+                ADD COLUMN db_id`
+            );
+            console.log("Successfully added column db_id to sold_products table.");
+            await database.runAsync(
+                `UPDATE sold_products
+                SET db_id = ?`,
+                [selectedDatabase?.id]
+            );
+        } catch (error) {
+            console.error("Error adding db_id to sold_products table:", error);
+        }
+    }
+
     const updateOrderTable = async () => {
         try {
              if (!selectedDatabase) {    
