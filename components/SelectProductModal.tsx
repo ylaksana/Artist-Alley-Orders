@@ -196,6 +196,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 console.log("Name 1:", option);
                 onSuccess(currProduct, option);
                 setOptionsModalVisible(false);
+                setCurrProduct(defaultProduct);
                 console.log("Product ID:", productId);
                 setProductId(null);
               }}
