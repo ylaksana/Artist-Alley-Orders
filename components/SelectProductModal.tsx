@@ -7,7 +7,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Button from "@/components/Button"; // Adjust the path as necessary
 import AddProductModal from "@/components/AddProductModel"; // Adjust the path as necessary
 import OptionsModal from "@/components/OptionsModal";
-import { ProductType, defaultProduct } from "@/app/(tabs)/index";
+import { ProductType, defaultProduct } from "@/types"; // Adjust the path as necessary
 
 
 type Props = {

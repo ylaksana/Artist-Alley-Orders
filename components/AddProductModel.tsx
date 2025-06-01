@@ -2,9 +2,7 @@ import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'r
 import { PropsWithChildren } from 'react';
 import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
-import { flattenOpenOptions } from 'expo-sqlite/build/NativeDatabase';
 import { useFocusEffect } from 'expo-router';
-import { loadOptions } from '@babel/core';
 
 
 type Props = PropsWithChildren<{

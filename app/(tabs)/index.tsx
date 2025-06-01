@@ -3,6 +3,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { Stack, useFocusEffect, useLocalSearchParams, router} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useState, useCallback, useEffect, } from "react";
+import { ProductType} from "@/types";
 
 import SelectProductModal from "@/components/SelectProductModal";
 import WarningModal from "@/components/WarningModal";
@@ -12,15 +13,6 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useDatabaseContext } from "../_layout";
 
-export type ProductType = {
-    id: number;
-    name:string;
-    email:string;
-    count: number;
-    hasOptions: boolean;
-  }
-
-export const defaultProduct = {id: 0, name: "", email: "", count: 0, hasOptions: false};
 
 export default function Index() {
     // variables

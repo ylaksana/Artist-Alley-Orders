@@ -56,11 +56,28 @@ function DatabaseProvider({ children }: { children: ReactNode }) {
   );
 }
 
+let dbInitialized = false;
+
 export default function RootLayout() {
   const createDBIfNeeded = async (db:SQLiteDatabase) => {
     // This function can be used to initialize the database if needed
+    if (dbInitialized) {
+      console.log("Database already initialized, skipping...");
+      return;
+    }
+    
     console.log("Checking if database needs to be created...");
+    dbInitialized = true;
+
     try{
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS databases (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          createdAt TEXT
+        );`
+      );
+      console.log("Databases table created successfully.");
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,7 +95,8 @@ export default function RootLayout() {
             type TEXT,
             name TEXT,
             email TEXT,
-            price REAL
+            price TEXT,
+            phone REAL,
             db_id INTEGER,
             FOREIGN KEY (db_id) REFERENCES databases(id) 
           );`
@@ -112,21 +130,12 @@ export default function RootLayout() {
         console.error("Error creating tables:", error);
       }
     
-      await db.execAsync(
-        `CREATE TABLE IF NOT EXISTS databases (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
-          createdAt TEXT
-        );`
-      );
-      console.log("Databases table created successfully.");
-    
   };
 
   return (
     <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
       <DatabaseProvider>
-        <StatusBar style="light" backgroundColor="#25292e"/>
+        <StatusBar style="light"/>
         <Stack
           screenOptions={{
             headerStyle: {

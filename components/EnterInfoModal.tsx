@@ -18,7 +18,7 @@ export default function EnterInfoModal({ isVisible, onClose, onSuccess } : Props
             visible={isVisible}
             onRequestClose={onClose}>
             <View style={styles.container}>
-                <Text style={styles.text}>Enter the name for your database:</Text>
+                <Text style={styles.text}>Enter the name for your convention:</Text>
                 <TextInput 
                     style={styles.textBox}
                     placeholder="Name"

@@ -5,7 +5,6 @@ import {useState} from 'react';
 // Component imports
 import Button from '@/components/Button';
 import WarningModal from '@/components/WarningModal';
-import { ProductType } from '@/app/(tabs)/index';
 
 type Props = {
     isVisible: boolean;
