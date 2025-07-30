@@ -24,6 +24,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
   const [name, setName] = useState<string>("");
+  const [searchText, setSearchText] = useState("");
   
   
   const database = useSQLiteContext();
@@ -96,8 +97,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
         visible={isVisible}
         onRequestClose={onClose}
     >
-        <View style= {styles.container}>
+        <View style={styles.container}>
             <Stack.Screen options={{headerRight}}/>
+            <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) => setSearchText(text)} />
             <ScrollView
                 style={styles.scrollView}>
                 {data.map((product) => (
@@ -149,7 +151,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
             
 
-            <View style={styles.buttomContainer}>
+            <View style={styles.buttonContainer}>
                 {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => {
                   console.log("Name:", name); 
                   onSuccess(currProduct, "")}
@@ -223,7 +225,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#25292e",
 
   },
-  buttomContainer:{
+  searchInput: {
+    width: "100%",
+    color: '#131518ff',
+    backgroundColor: '#25292eff',
+    borderColor: '#525961',
+    borderWidth: 3,
+    borderRadius: 5,
+    paddingLeft: 10,
+    fontSize: 16,
+    marginTop: 5,
+    fontWeight: 'bold',
+    marginBottom: 15,
+
+  },
+  buttonContainer:{
     marginTop: 20,
     width: "80%",
     alignItems: "center",

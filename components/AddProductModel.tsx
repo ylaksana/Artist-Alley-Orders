@@ -24,6 +24,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [optionsData, setOptionsData] = useState<string[]>([]);
     const [optionText, setOptionText] = useState("");
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+    
 
     useEffect(() => {
         if(!isVisible) {
@@ -243,11 +244,23 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             <View style={styles.productModalCard}>
               <Text style={styles.productModalText}>Add Product</Text>
               
-              
               {!extraOptions && (
-                  <View style={styles.productOptions}>
-                  <TextInput style={[styles.productNameInput, {color: '#fff'}]} placeholder="Name" placeholderTextColor={'#fff'} value={name} onChangeText={(text)=>setName(text)}></TextInput>
-                  <TextInput style={styles.productNameInput} placeholder="Price" keyboardType="numeric" placeholderTextColor={'#fff'} value={price} onChangeText={(text)=>setPrice(text)}></TextInput>
+                <View style={styles.productOptions}>
+                  <TextInput
+                    style={[styles.productNameInput, { color: '#fff' }]}
+                    placeholder="Name"
+                    placeholderTextColor={'#fff'}
+                    value={name}
+                    onChangeText={(text) => setName(text)}
+                  ></TextInput>
+                  <TextInput
+                    style={styles.productNameInput}
+                    placeholder="Price"
+                    keyboardType="numeric"
+                    placeholderTextColor={'#fff'}
+                    value={price}
+                    onChangeText={(text) => setPrice(text)}
+                  ></TextInput>
                    <Pressable
                     style={styles.productModalButton}
                     onPress={() => {

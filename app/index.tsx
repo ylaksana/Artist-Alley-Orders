@@ -13,7 +13,7 @@ import { useDatabaseContext } from './_layout';
 export default function DatabaseList() {
   const headerRight = () => {
         return(
-          <Pressable onPress={() => setEnterInfoModalVisible(true)} style={{marginLeft: 5, padding: 10}}>
+          <Pressable style={{marginLeft: 5, padding: 10}} onPress={() => setEnterInfoModalVisible(true)}>
             <MaterialCommunityIcons name="plus" size={24} color="#ffd33d"/>
           </Pressable>
         )
@@ -123,7 +123,6 @@ export default function DatabaseList() {
                 },
                 headerTintColor: "#fff",
                 headerShadowVisible: false, // Removes the shadow/border under header
-                
                 }}
             />
             {databases.length > 0 && 
