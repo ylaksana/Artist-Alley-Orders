@@ -25,8 +25,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
   const [name, setName] = useState<string>("");
   const [searching, setSearching] = useState<boolean>(false);
-  const [searchedProducts, setSearchedProducts] = useState<ProductType[]>([]);
-  const [products, setProducts] = useState<ProductType[]>([]);
   const [searchText, setSearchText] = useState("");
   
   
@@ -92,15 +90,21 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   }
 
   const search = async (text: string) => {
+    // Set searching true to indicate that the user is searching
+    if(!searching){
+      setSearching(true);
+    }
+
     // If the search text is not empty, filter the products based on the search text. Create a new array with the products that match the search text
     if(text.length > 0){
-
+      const filteredProducts = data.filter((product) => {
+        product.name.toLowerCase().includes(text.toLowerCase());
+      })
+      setData(filteredProducts);
     }
     //If search text is empty, reset the data to the original products
     else {
-      setData(products);
-      setProducts([]);
-      setSearchedProducts([]);
+      setSearching(false);
       return;
     }
   }
