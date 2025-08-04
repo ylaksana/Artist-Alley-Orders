@@ -24,6 +24,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
   const [name, setName] = useState<string>("");
+  const [searching, setSearching] = useState<boolean>(false);
+  const [searchedProducts, setSearchedProducts] = useState<ProductType[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [searchText, setSearchText] = useState("");
   
   
@@ -88,7 +91,19 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     }
   }
 
- 
+  const search = async (text: string) => {
+    // If the search text is not empty, filter the products based on the search text. Create a new array with the products that match the search text
+    if(text.length > 0){
+
+    }
+    //If search text is empty, reset the data to the original products
+    else {
+      setData(products);
+      setProducts([]);
+      setSearchedProducts([]);
+      return;
+    }
+  }
 
   return (
     <Modal
@@ -99,7 +114,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     >
         <View style={styles.container}>
             <Stack.Screen options={{headerRight}}/>
-            <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) => setSearchText(text)} />
+            <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) =>{search(text)}}/>
             <ScrollView
                 style={styles.scrollView}>
                 {data.map((product) => (
@@ -109,6 +124,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                         styles.cell, 
                         { backgroundColor: currProduct.id === product.id ? '#525b66' : '#25292e' }
                     ]}
+                    // if the product has extra options, user needs to select them before adding to list, else add to list directly
                     onPress={async () => {
                         await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
                     }}>
@@ -153,12 +169,14 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
             <View style={styles.buttonContainer}>
                 {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => {
-                  console.log("Name:", name); 
-                  onSuccess(currProduct, "")}
-                  } />)}
+                  console.log("Name:", name);
+                  onSuccess(currProduct, "")
+                }} />)}
                 {/* add product button */}
 
-                {editMode && (
+
+                {/* If in edit mode and search bar is empty, allow users to add products */}
+                {editMode && !searching && (
                   <Button
                     label="Add Product"
                     theme="primary"
@@ -227,7 +245,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     width: "100%",
-    color: '#131518ff',
+    color: '#ffffffff',
     backgroundColor: '#25292eff',
     borderColor: '#525961',
     borderWidth: 3,
