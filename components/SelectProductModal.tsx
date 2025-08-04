@@ -101,9 +101,12 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
     // If the search text is not empty, filter the products based on the search text. Create a new array with the products that match the search text
     if(text.length > 0){
-      const filteredProducts = products.filter((product) => {
-        product.name.toLowerCase().includes(text.toLowerCase());
-      })
+      // If searching, filter the products based on the search text
+      const currData = searching ? products : data;
+      console.log(`Products: ${products}`);
+      const filteredProducts = currData.filter((product) => {
+      return product.name.toLowerCase().includes(text.toLowerCase());
+    });
       console.log("Filtered Products:", filteredProducts);
       setData(filteredProducts);
     }
@@ -112,7 +115,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
       setData(products);
       setProducts([]);
       setSearching(false);
-      return;
     }
   }
 
