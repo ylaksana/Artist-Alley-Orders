@@ -23,7 +23,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
-  const [name, setName] = useState<string>("");
   const [products, setProducts] = useState<ProductType[]>([]);
   const [searching, setSearching] = useState<boolean>(false);
   const [searchText, setSearchText] = useState("");
@@ -50,8 +49,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-      setCurrProduct
+      if(!searching){
+        loadData();
+      }
     }
     , [])
   );

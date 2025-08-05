@@ -1,6 +1,6 @@
 import {Text, View, StyleSheet, ScrollView, Pressable} from 'react-native';
 import { useSQLiteContext} from 'expo-sqlite';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import { router, useFocusEffect, Stack} from 'expo-router';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -107,10 +107,11 @@ export default function DatabaseList() {
   }
   
   // useEffect for whenever the databases state changes
-  useEffect(() => {
-    fetchDatabases();
-  }
-  , [databases]);
+    useFocusEffect(
+      useCallback(() => {
+        fetchDatabases();
+      }, [])
+    );
 
     return (  
         <View style={styles.container}>
