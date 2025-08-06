@@ -23,6 +23,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
+  const [name, setName] = useState<string>("");
   const [products, setProducts] = useState<ProductType[]>([]);
   const [searching, setSearching] = useState<boolean>(false);
   const [searchText, setSearchText] = useState("");
@@ -181,8 +182,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
             
 
             <View style={styles.buttonContainer}>
-                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme = "primary" onPress={() => {
+                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme="primary" onPress={() => {
                   console.log("Name:", name);
+                  search("")
                   onSuccess(currProduct, "")
                 }} />)}
                 {/* add product button */}
