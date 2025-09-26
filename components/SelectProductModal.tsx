@@ -48,20 +48,12 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
 
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      if(!searching){
-        loadData();
-      }
-    }
-    , [])
-  );
 
-  // useFocusEffect(() => {
-  //   if (isVisible) {
-  //     setCurrProduct(defaultProduct);
-  //   }
-  // })
+  useEffect(() => {
+  if (isVisible) {
+    loadData();
+  }
+}, [isVisible]);
 
   const headerRight = () => {
     return(
