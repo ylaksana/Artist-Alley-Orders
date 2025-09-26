@@ -26,6 +26,26 @@ export default function DatabaseList() {
   const [id, setId] = useState<string>('');
   const { setSelectedDatabase } = useDatabaseContext();
 
+
+  // this won't actually run if we add and delete a database because we never unmount this component since we use a modal to add and delete databases
+  // the real refresh happens within the create and delete functions
+  // but I want to keep this here in case we ever need it for future implementations outside of this screen
+  useFocusEffect(
+    useCallback(() => {
+      loadDatabases();
+    }, [])
+  );
+
+  const loadDatabases = async () => {
+      try {
+        const result: DatabaseInfo[] = await db.getAllAsync('SELECT * FROM databases');
+        console.log('Loaded databases:', result); // Add logging to debug
+        setDatabases(result);
+      } catch (error) {
+        console.error('Error loading databases:', error);
+      }
+    };
+
   // Function to create databases
   const createDatabase = async (name : string) => {
     try {
@@ -37,9 +57,12 @@ export default function DatabaseList() {
         `INSERT INTO databases (name, createdAt) VALUES (?, ?)`,
         [name, dateMDY]
       );
+
+      await loadDatabases();
     } catch (error) {
       console.error("Error creating database:", error);
     }
+    
   }
 
   // Function to delete databases
@@ -68,28 +91,13 @@ export default function DatabaseList() {
       console.log("Check orders after deletion:", check2.length);
       
       // update the databases state
-      fetchDatabases();
+      await loadDatabases();
     
     } catch (error) {
       console.error("Error deleting database:", error);
     }
   }
   
-  // Function to fetch databases
-  const fetchDatabases = async () => {
-      // Fetch all databases from the database
-      const result = await db.getAllAsync<DatabaseInfo>(`SELECT * FROM databases`);
-      // Merge with existing databases
-      const updatedResult = result.map(database => {
-        return database;
-      });
-    
-      // Update the data state with the merged information
-      setDatabases(updatedResult);
-      
-  
-    };
-
   // Function to navigate to selecteddatabase
   const navigateToDatabase = (database: DatabaseInfo) => {
     // console.log("Navigating to database with id:", dbID);
@@ -105,13 +113,7 @@ export default function DatabaseList() {
     // Navigate to tabs
     router.push('/(tabs)');
   }
-  
-  // useEffect for whenever the databases state changes
-    useFocusEffect(
-      useCallback(() => {
-        fetchDatabases();
-      }, [])
-    );
+
 
     return (  
         <View style={styles.container}>
@@ -173,7 +175,6 @@ export default function DatabaseList() {
                 onClose={() => setEnterInfoModalVisible(false)}
                 onSuccess={(name: string) => {
                   createDatabase(name);
-                  fetchDatabases();
                   setEnterInfoModalVisible(false);
                 }}/>
             
