@@ -31,6 +31,9 @@ export default function OrderHistoryScreen() {
     const [data, setData] = useState<OrderType[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const database = useSQLiteContext();
+    const [pageNumber, setPageNumber] = useState(1);
+    const [lastIndex, setLastIndex] = useState<number|null>(null);
+    const limit = 10;
 
     
 
@@ -38,33 +41,33 @@ export default function OrderHistoryScreen() {
 
     useFocusEffect(
         useCallback(() => {
-          loadData();
+          loadData(limit);
           checkSoldProducts();
         }
         , [])
     );
     
-    const updateSoldProductsTable = async () => {
-        try {
-            if (!selectedDatabase) {    
-                console.warn('No database selected in Order History');
-                setData([]);
-                return; // Exit early
-            }
-            await database.runAsync(
-                `ALTER TABLE sold_products
-                ADD COLUMN db_id`
-            );
-            console.log("Successfully added column db_id to sold_products table.");
-            await database.runAsync(
-                `UPDATE sold_products
-                SET db_id = ?`,
-                [selectedDatabase?.id]
-            );
-        } catch (error) {
-            console.error("Error adding db_id to sold_products table:", error);
-        }
-    }
+    // const updateSoldProductsTable = async () => {
+    //     try {
+    //         if (!selectedDatabase) {    
+    //             console.warn('No database selected in Order History');
+    //             setData([]);
+    //             return; // Exit early
+    //         }
+    //         await database.runAsync(
+    //             `ALTER TABLE sold_products
+    //             ADD COLUMN db_id`
+    //         );
+    //         console.log("Successfully added column db_id to sold_products table.");
+    //         await database.runAsync(
+    //             `UPDATE sold_products
+    //             SET db_id = ?`,
+    //             [selectedDatabase?.id]
+    //         );
+    //     } catch (error) {
+    //         console.error("Error adding db_id to sold_products table:", error);
+    //     }
+    // }
 
     // const updateOrderTable = async () => {
     //     try {
@@ -88,14 +91,26 @@ export default function OrderHistoryScreen() {
     //     }
     // }
 
-    const loadData = async () => {
-        if (!selectedDatabase) {    
+    const loadData = async (limit : number) => {
+        if (!selectedDatabase) {
+        //check for empty database selection   
         console.warn('No database selected in Order History');
         setData([]);
-        return; // Exit early
+        return;
     }
-        const result = await database.getAllAsync<OrderType>(`SELECT * FROM orders WHERE db_id = ?`, [selectedDatabase.id]);
-        // Uncomment the line below to log the result for debugging
+        let query, params;
+
+        if (pageNumber === 1) {
+            query = `SELECT * FROM orders WHERE db_id = ? ORDER BY id DESC LIMIT ?`;
+            params = [selectedDatabase.id, limit];
+        } else {
+            query = `SELECT * FROM orders WHERE db_id = ? and id < ? ORDER BY id DESC LIMIT ?`;
+            params = [selectedDatabase.id, lastIndex, limit];
+        }
+
+        const result = await database.getAllAsync<OrderType>(query, params);
+        setLastIndex(result.length > 0 ? result[result.length - 1].id : null);
+        // debug line to see loaded orders
         console.log("Orders loaded:", result);
         setData(result);
     };
@@ -104,7 +119,7 @@ export default function OrderHistoryScreen() {
         try{
             await database.runAsync(`DELETE FROM orders WHERE id = ?`, [id]);
             await database.runAsync(`DELETE FROM sold_products WHERE user_id = ?`, [id]);
-            loadData();
+            loadData(limit);
         }
         catch (error) {
         alert(`Error deleting order: ${error}`);
