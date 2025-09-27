@@ -6,6 +6,7 @@ import { useFocusEffect } from "expo-router";
 
 import OrderModal from '@/components/OrderModal';
 import { useDatabaseContext } from '../_layout';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 
 export type OrderType ={
@@ -188,6 +189,23 @@ export default function OrderHistoryScreen() {
             )}
             
             {data.length === 0 && (<Text style={styles.text}>No Sales Yet!</Text>)}
+            
+            <View style={styles.pageNavigation}>
+                <View style={styles.button}>
+                <Pressable onPress={() => loadData(limit)}>
+                    <FontAwesome name="arrow-left" size={24} color="#000" />
+                </Pressable>
+            </View>
+            <View style={styles.pageNumber}>
+                <Text style={styles.pageNumberText}>Page {pageNumber}</Text>
+            </View>
+            <View style={styles.button}>
+                <Pressable onPress={() => loadData(limit)}>
+                    <FontAwesome name="arrow-right" size={24} color="#000" />
+                </Pressable>
+            </View>
+            </View>
+            
         </View>
         
     );
@@ -219,5 +237,33 @@ const styles=StyleSheet.create({
         borderWidth: 1,
         borderColor: '#525961', // Change this color to modify the border colo
     },
+    pageNavigation:{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '80%',
+        padding: 10,
+        marginBottom: 10,
+    },
+    button:{
+        backgroundColor: '#ffd33d',
+        padding: 15,
+        borderRadius: 5,
+    },
+    pageNumber:{
+        fontSize: 18,
+        color: '#b8b8b8ff',
+        paddingHorizontal: 40,
+        paddingVertical: 15,
+        backgroundColor: '#25292e',
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: '#525961', // Change this color to modify the border colo
+    },
+    pageNumberText:{
+        fontSize: 18,
+        color: '#b8b8b8ff', 
+        fontWeight: 'bold',
+    }
 
 });
