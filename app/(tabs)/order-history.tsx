@@ -91,8 +91,11 @@ export default function OrderHistoryScreen() {
     // }
 
     const loadData = async (page: number) => {
-        if (!selectedDatabase) return;
+        if (!selectedDatabase) {
+            return;
+        }
         
+
         const limit = 10;
         const offset = (page - 1) * limit;
         const query = `SELECT * FROM orders WHERE db_id = ? ORDER BY id DESC LIMIT ? OFFSET ?`;
@@ -103,6 +106,9 @@ export default function OrderHistoryScreen() {
             setData(result);
         }
         else{
+            if (page === 1) {
+                setData([]);
+            }
             if (page > 1) {
                 setPageNumber(page - 1);
             }
