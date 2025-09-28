@@ -32,9 +32,7 @@ export default function OrderHistoryScreen() {
     const [data, setData] = useState<OrderType[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const database = useSQLiteContext();
-    const [pageNumber, setPageNumber] = useState(1);
-    const [lastIndex, setLastIndex] = useState<number|null>(null);
-    const limit = 10;
+    const [pageNumber, setPageNumber] = useState<number>(1);
 
     
 
@@ -42,8 +40,8 @@ export default function OrderHistoryScreen() {
 
     useFocusEffect(
         useCallback(() => {
-          loadData(limit);
-          checkSoldProducts();
+            goToPage(pageNumber);
+            checkSoldProducts();
         }
         , [])
     );
@@ -92,35 +90,36 @@ export default function OrderHistoryScreen() {
     //     }
     // }
 
-    const loadData = async (limit : number) => {
-        if (!selectedDatabase) {
-        //check for empty database selection   
-        console.warn('No database selected in Order History');
-        setData([]);
-        return;
-    }
-        let query, params;
-
-        if (pageNumber === 1) {
-            query = `SELECT * FROM orders WHERE db_id = ? ORDER BY id DESC LIMIT ?`;
-            params = [selectedDatabase.id, limit];
-        } else {
-            query = `SELECT * FROM orders WHERE db_id = ? and id < ? ORDER BY id DESC LIMIT ?`;
-            params = [selectedDatabase.id, lastIndex, limit];
-        }
-
+    const loadData = async (page: number) => {
+        if (!selectedDatabase) return;
+        
+        const limit = 10;
+        const offset = (page - 1) * limit;
+        const query = `SELECT * FROM orders WHERE db_id = ? ORDER BY id DESC LIMIT ? OFFSET ?`;
+        const params = [selectedDatabase.id, limit, offset];
+        
         const result = await database.getAllAsync<OrderType>(query, params);
-        setLastIndex(result.length > 0 ? result[result.length - 1].id : null);
-        // debug line to see loaded orders
-        console.log("Orders loaded:", result);
-        setData(result);
+        if (result.length > 0) {
+            setData(result);
+        }
+        else{
+            if (page > 1) {
+                setPageNumber(page - 1);
+            }
+        }
+        
+    };
+
+    const goToPage = (newPage: number) => {
+        setPageNumber(newPage);
+        loadData(newPage);
     };
 
     const deleteOrder = async (id: number) => {
         try{
             await database.runAsync(`DELETE FROM orders WHERE id = ?`, [id]);
             await database.runAsync(`DELETE FROM sold_products WHERE user_id = ?`, [id]);
-            loadData(limit);
+            loadData(pageNumber);
         }
         catch (error) {
         alert(`Error deleting order: ${error}`);
@@ -192,7 +191,11 @@ export default function OrderHistoryScreen() {
             
             <View style={styles.pageNavigation}>
                 <View style={styles.button}>
-                <Pressable onPress={() => loadData(limit)}>
+                <Pressable onPress={() => {
+                    if (pageNumber > 1) {
+                        goToPage(pageNumber - 1);
+                    }
+                }}>
                     <FontAwesome name="arrow-left" size={24} color="#000" />
                 </Pressable>
             </View>
@@ -200,7 +203,9 @@ export default function OrderHistoryScreen() {
                 <Text style={styles.pageNumberText}>Page {pageNumber}</Text>
             </View>
             <View style={styles.button}>
-                <Pressable onPress={() => loadData(limit)}>
+                <Pressable onPress={() => {
+                    goToPage(pageNumber + 1);
+                }}>
                     <FontAwesome name="arrow-right" size={24} color="#000" />
                 </Pressable>
             </View>
