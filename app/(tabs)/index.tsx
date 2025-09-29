@@ -72,36 +72,63 @@ export default function Index() {
       };
     
     
-      const addProductToList = (products: ProductType[], option: string) => {
+      const addProductsToList = (products: ProductType[], option: string) => {
+        // // create product object with the selected product
+        // const newProduct = {...product};
+        // // console.log("newProduct:", newProduct);
+        
+        // // check if the product has options, if so change the name
+        // console.log("option:", option);
+        // if(option !== ""){
+        //     newProduct.name += " " + option;
+        //     console.log("newProduct with option:", newProduct);
+        //   }
+
+        // // check if the product is already in the selectedProducts array
+        // const index = selectedProducts.findIndex(item => item.name === newProduct.name)
+        // // console.log("index:", index);
+
+        // // if the product is not in the array, add it
+        // if(index === -1){ 
+        //   newProduct.count = 1;
+        //   setSelectedProducts([...selectedProducts, newProduct]);
+        // }
+        // // if the product is already in the array, increase the count
+        // else{
+        //   selectedProducts[index].count += 1;
+        // }
+        // setSum(sum + parseInt(product.email));
+        // console.log(selectedProducts);
+        // console.log('option:', option);
         // create product object with the selected product
         const newProducts = products.map(item => ({ ...item }));
         // console.log("newProduct:", newProduct);
         
         // check if the product has options, if so change the name
         console.log("option:", option);
-        if(option !== ""){
-            newProducts.forEach(product => {
-                product.name += " " + option;
-                console.log("newProduct with option:", product);
-            });
+        newProducts.forEach(product => {
+          if(option !== ""){
+            product.name += " " + option;
+            console.log("newProduct with option:", product);
+
+          // check if the product is already in the selectedProducts array
+          const index = selectedProducts.findIndex(item => item.name === product.name)
+          // console.log("index:", index);
+
+          // if the product is not in the array, add it
+          if(index === -1){ 
+            product.count = 1;
+            setSelectedProducts([...selectedProducts, ...newProducts]);
           }
-
-        // check if the product is already in the selectedProducts array
-        const index = selectedProducts.findIndex(item => item.name === newProducts[0].name)
-        // console.log("index:", index);
-
-        // if the product is not in the array, add it
-        if(index === -1){ 
-          newProducts[0].count = 1;
-          setSelectedProducts([...selectedProducts, ...newProducts]);
-        }
-        // if the product is already in the array, increase the count
-        else{
-          selectedProducts[index].count += 1;
-        }
-        setSum(sum + parseInt(products[0].email));
-        console.log(selectedProducts);
-        console.log('option:', option);
+          // if the product is already in the array, increase the count
+          else{
+            selectedProducts[index].count += 1;
+          }
+          setSum(sum + parseInt(product.email));
+          console.log(selectedProducts);
+          console.log('option:', option);
+          }
+        });
       };
 
       const changeOrderInformation = (name: string, phone: string, address: string, sale: string) => {
@@ -243,7 +270,7 @@ export default function Index() {
               setEditMode(false);
             }}
             onSuccess={(currProducts: ProductType[], option: string, productList?: ProductType[] | null) => {
-              addProductToList(currProducts, option);
+              addProductsToList(currProducts, option);
               console.log("selectedProducts:", selectedProducts);
               setSelectProductModalVisible(false);
               }}/>

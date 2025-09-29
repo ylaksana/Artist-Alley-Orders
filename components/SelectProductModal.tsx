@@ -14,7 +14,8 @@ type Props = {
     isVisible: boolean;
     editMode?: boolean;
     onClose: () => void;
-    onSuccess: (product: ProductType, name: string) => void;
+    // onSuccess: (product: ProductType, name: string) => void;
+    onSuccess: (products: ProductType[], name: string) => void;
 }
 
 export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
@@ -22,6 +23,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
+  const [productIds, setProductIds] = useState<number[]>([]);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
   const [currProducts, setCurrProducts] = useState<ProductType[]>([]);
   const [name, setName] = useState<string>("");
@@ -56,6 +58,9 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   }
 }, [isVisible]);
 
+  
+
+
   const headerRight = () => {
     return(
       <Pressable onPress={() => setAddProductModalVisible(true)} style={{padding: 10}}>
@@ -77,7 +82,8 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const openOptionsModal = async (product: ProductType) => {
     // Check to see if options exist for this product
     if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
-      setCurrProduct(product);
+      // setCurrProduct(product);
+      setCurrProducts(prev => [...prev, product]);
       setProductId(product.id);
       console.log("Product:", product);
       setOptionsModalVisible(true);
@@ -129,14 +135,31 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                     key={product.id}
                     style={[
                         styles.cell, 
-                        { backgroundColor: currProduct.id === product.id ? '#525b66' : '#25292e' }
+                        { backgroundColor: productIds.includes(product.id) ? '#525b66' : '#25292e' }
                     ]}
                     // if the product has extra options, user needs to select them before adding to list, else add to list directly
                     // onPress={async () => {
                     //     await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
                     // }}>
                     onPress={async () => {
-                      await optionsExists(product.id) ? openOptionsModal(product) : setCurrProducts(prev => [...prev, product]);
+                      if (await optionsExists(product.id)) {
+                        openOptionsModal(product);
+                      } else {
+                        //add product to list if it doesn't already exist
+                        const existsInSelection = productIds.includes(product.id);
+    
+                        if (!existsInSelection) {
+                          // add product to list
+                          setCurrProducts(prev => [...prev, product]);
+                          setProductIds(prev => [...prev, product.id]);
+                        } else {
+                          // remove product from list
+                          setCurrProducts(prev => prev.filter(p => p.id !== product.id));
+                          setProductIds(prev => prev.filter(id => id !== product.id));
+                        }
+                        console.log("Product IDs:", productIds);
+                        console.log("Current Products:", currProducts);
+                      }
                     }}>
                     {/* <View style={styles.productCounterContainer}>
                         <Pressable 
@@ -178,10 +201,18 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
             
 
             <View style={styles.buttonContainer}>
-                {!editMode && currProduct.name !== "" && (<Button label="Submit" theme="primary" onPress={() => {
+                {/* {!editMode && currProduct.name !== "" && (<Button label="Submit" theme="primary" onPress={() => {
                   console.log("Name:", name);
                   search("")
                   onSuccess(currProduct, "")
+                }} />)} */}
+
+                 {!editMode && currProducts.length > 0 && (<Button label="Submit" theme="primary" onPress={() => {
+                  console.log("Name:", name);
+                  search("")
+                  onSuccess(currProducts, "")
+                  setCurrProducts([]);
+                  setProductIds([]);
                 }} />)}
                 {/* add product button */}
 
@@ -199,6 +230,8 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                   {
                     setCurrProduct(defaultProduct);
                     console.log(currProduct);
+                    setCurrProducts([]);
+                    setProductIds([]);
                     onClose();
                   }
                   } />
@@ -225,14 +258,13 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
               productId={productId}
               onSuccess={(option: string) => {
                 console.log("Name 1:", option);
-                onSuccess(currProduct, option);
+                onSuccess(currProducts, option);
                 setOptionsModalVisible(false);
                 setCurrProduct(defaultProduct);
                 console.log("Product ID:", productId);
                 setProductId(null);
               }}
-              onClose={() => 
-                {
+              onClose={() => {
                   setCurrProduct(defaultProduct);
                   setOptionsModalVisible(false);
                   console.log("Product ID:", productId);
