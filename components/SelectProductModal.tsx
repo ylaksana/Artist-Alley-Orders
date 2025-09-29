@@ -23,6 +23,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [productId, setProductId] = useState<number | null>(null);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
+  const [currProducts, setCurrProducts] = useState<ProductType[]>([]);
   const [name, setName] = useState<string>("");
   const [products, setProducts] = useState<ProductType[]>([]);
   const [searching, setSearching] = useState<boolean>(false);
@@ -131,8 +132,11 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                         { backgroundColor: currProduct.id === product.id ? '#525b66' : '#25292e' }
                     ]}
                     // if the product has extra options, user needs to select them before adding to list, else add to list directly
+                    // onPress={async () => {
+                    //     await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
+                    // }}>
                     onPress={async () => {
-                        await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
+                      await optionsExists(product.id) ? openOptionsModal(product) : setCurrProducts(prev => [...prev, product]);
                     }}>
                     {/* <View style={styles.productCounterContainer}>
                         <Pressable 

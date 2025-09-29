@@ -72,32 +72,34 @@ export default function Index() {
       };
     
     
-      const addProductToList = (product: ProductType, option: string) => {
+      const addProductToList = (products: ProductType[], option: string) => {
         // create product object with the selected product
-        const newProduct = {...product};
+        const newProducts = products.map(item => ({ ...item }));
         // console.log("newProduct:", newProduct);
         
         // check if the product has options, if so change the name
         console.log("option:", option);
         if(option !== ""){
-            newProduct.name += " " + option;
-            console.log("newProduct with option:", newProduct);
+            newProducts.forEach(product => {
+                product.name += " " + option;
+                console.log("newProduct with option:", product);
+            });
           }
 
         // check if the product is already in the selectedProducts array
-        const index = selectedProducts.findIndex(item => item.name === newProduct.name)
+        const index = selectedProducts.findIndex(item => item.name === newProducts[0].name)
         // console.log("index:", index);
 
         // if the product is not in the array, add it
         if(index === -1){ 
-          newProduct.count = 1;
-          setSelectedProducts([...selectedProducts, newProduct]);
+          newProducts[0].count = 1;
+          setSelectedProducts([...selectedProducts, ...newProducts]);
         }
         // if the product is already in the array, increase the count
         else{
           selectedProducts[index].count += 1;
         }
-        setSum(sum + parseInt(product.email));
+        setSum(sum + parseInt(products[0].email));
         console.log(selectedProducts);
         console.log('option:', option);
       };
@@ -240,8 +242,8 @@ export default function Index() {
               setSelectProductModalVisible(false);
               setEditMode(false);
             }}
-            onSuccess={(currProduct: ProductType, option: string, productList?: ProductType[] | null) => {
-              addProductToList(currProduct, option);
+            onSuccess={(currProducts: ProductType[], option: string, productList?: ProductType[] | null) => {
+              addProductToList(currProducts, option);
               console.log("selectedProducts:", selectedProducts);
               setSelectProductModalVisible(false);
               }}/>
