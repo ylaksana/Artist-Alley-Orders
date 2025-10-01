@@ -114,6 +114,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     else {
       setData(products);
       setProducts([]);
+      loadData();
       setSearching(false);
     }
   }
@@ -208,7 +209,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 }} />)} */}
 
                  {!editMode && currProducts.length > 0 && (<Button label="Submit" theme="primary" onPress={() => {
-                  console.log("Name:", name);
+                  console.log("Current Products on Submit:", currProducts);
                   search("")
                   onSuccess(currProducts, "")
                   setCurrProducts([]);

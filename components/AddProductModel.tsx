@@ -61,15 +61,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     //     }
     //   }
 
-    const optionsExists = async (productId: number) => {
-      const result = await database.getAllAsync(`SELECT * FROM extra_options WHERE user_id = ?`, [productId]);
-      if (result.length > 0) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
     const loadData = async () =>{
         if(!productId) return;
       try{
@@ -125,6 +116,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
   
         const filteredOptions = optionsData.filter((option) => !optionList.includes(option));
         const allOptions = [...optionList, ...filteredOptions];
+        console.log("All options:", allOptions);
         setOptionsData(allOptions);
       }
       catch (error) {
@@ -133,8 +125,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     };
 
     const addOption = async () => {
+        console.log("Adding option:", optionText);
         if(!productId) return;
         try{
+          console.log("Adding option:", optionText);
           if (optionExists(optionText)) {
             alert("Option already exists!");
             return;
@@ -199,7 +193,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     }
 
     const deleteOption = async () => {
-      if(!productId || selectedOptions.length === 0) return;
+      if(selectedOptions.length === 0) return;
 
       const deletedOptions =  [...selectedOptions];
 
@@ -209,11 +203,16 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       
       // Then perform database operations in the background
       try {
-        for (const option of deletedOptions) {
-          await database.runAsync(
-            `DELETE FROM extra_options WHERE user_id = ? AND option = ?`,
-            [productId, option]
-          );
+        if(productId){
+          for (const option of deletedOptions) {
+            await database.runAsync(
+              `DELETE FROM extra_options WHERE user_id = ? AND option = ?`,
+              [productId, option]
+            );
+          }
+        }
+        else{
+          setOptionsData(optionsData.filter(option => !deletedOptions.includes(option)));
         }
         alert("Delete successful!");
       } catch (error) {
@@ -302,9 +301,15 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 {optionText !== '' && (<Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                    addOption();
-                    handleOptionChange();
-                    setOptionsData([])
+                    if(!productId){
+                      setOptionsData([...optionsData, optionText]);
+                      setOptionText("");
+                      // alert("Option added locally. Save the product to store it permanently.");
+                    }
+                    else{
+                      addOption();
+                      handleOptionChange();
+                    }
                   }}>
                 <Text style={{color: '#000'}}>Add Option</Text>
                 </Pressable>)}

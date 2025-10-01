@@ -101,13 +101,14 @@ export default function Index() {
         // console.log(selectedProducts);
         // console.log('option:', option);
         // create product object with the selected product
-        const newProducts = products.map(item => ({ ...item }));
+        // const newProducts = products.map(item => ({ ...item }));
         // console.log("newProduct:", newProduct);
         
         // check if the product has options, if so change the name
-        console.log("option:", option);
-        newProducts.forEach(product => {
-          if(option !== ""){
+        // console.log("option:", option);
+        products.forEach(product => {
+          console.log("Processing product:", product);
+          if(product.hasOptions){
             product.name += " " + option;
             console.log("newProduct with option:", product);
 
@@ -118,7 +119,7 @@ export default function Index() {
           // if the product is not in the array, add it
           if(index === -1){ 
             product.count = 1;
-            setSelectedProducts([...selectedProducts, ...newProducts]);
+            setSelectedProducts([...selectedProducts, product]);
           }
           // if the product is already in the array, increase the count
           else{
