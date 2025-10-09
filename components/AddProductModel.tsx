@@ -20,10 +20,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [count, setCount] = useState(0);
     const [hasOptions, setHasOptions] = useState(false);
     const [editMode, setEditMode] = useState(false);
-    const [extraOptions, setExtraOptions] = useState(false);
     const [optionsData, setOptionsData] = useState<string[]>([]);
     const [optionText, setOptionText] = useState("");
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+    const [extraOptionsVisible, setExtraOptionsVisible] = useState(false);
     
 
     useEffect(() => {
@@ -243,7 +243,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             <View style={styles.productModalCard}>
               <Text style={styles.productModalText}>Add Product</Text>
               
-              {!extraOptions && (
+              {!extraOptionsVisible && (
                 <View style={styles.productOptions}>
                   <TextInput
                     style={[styles.productNameInput, { color: '#fff' }]}
@@ -263,7 +263,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                    <Pressable
                     style={styles.productModalButton}
                     onPress={() => {
-                      setExtraOptions(!extraOptions);
+                      setExtraOptionsVisible(true);
                     }}>
                     <Text style={{color: '#000'}}>Add Extra Options</Text>
                   </Pressable>
@@ -286,8 +286,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   </Pressable>
                 </View>
               )}
-              
-              {extraOptions && (
+
+              {extraOptionsVisible && (
                 <View style={styles.productOptions}>
                   <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={optionText} onChangeText={(text)=>setOptionText(text)}></TextInput>
                   <ScrollView style={styles.productModalExtraOptionsList} contentContainerStyle={{ paddingBottom: 30 }}>
@@ -320,11 +320,22 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     }}>
                     <Text style={{color: '#000'}}>Delete Option</Text>
                   </Pressable>
+
+                {selectedOptions.length > 0 && (
+                <Pressable
+                  onPress={() => {
+                    setSelectedOptions([])
+                    setHasOptions(false);
+                  }}
+                  style={styles.productModalButton}
+                >
+                  <Text style={{ color: '#000' }}>Clear Selection</Text>
+                </Pressable>)}
+
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                    setOptionsData([])
-                    setExtraOptions(false);
+                    setExtraOptionsVisible(false);
                   }}>
                   <Text style={{color: '#000'}}>Back</Text>
                 </Pressable>
