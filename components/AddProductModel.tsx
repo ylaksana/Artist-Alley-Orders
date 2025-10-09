@@ -24,6 +24,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [optionText, setOptionText] = useState("");
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [extraOptionsVisible, setExtraOptionsVisible] = useState(false);
+    const [previousOptions, setPreviousOptions] = useState<string[]>([]);
     
 
     useEffect(() => {
@@ -82,6 +83,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           `SELECT * FROM extra_options WHERE user_id=?`, [productId]
         );
 
+        // Set hasOptions based on whether options exist
+        setHasOptions(options.length > 0);
+
+        // Set optionsData to the list of option strings saved in database
         const optionsList = options.map((item) => item.option);
         setOptionsData(optionsList);
         console.log("Options data:", optionsList);
@@ -124,27 +129,28 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     };
 
+    // Add new option to extra options
+    // If there's a productId, backup original options are stored in the database
     const addOption = async () => {
         console.log("Adding option:", optionText);
-        if(!productId) return;
         try{
           console.log("Adding option:", optionText);
           if (optionExists(optionText)) {
             alert("Option already exists!");
             return;
           }
-          await database.runAsync(
-            `INSERT INTO extra_options (user_id, option) VALUES(?, ?)`,
-            [productId, optionText]
-          );
+          if(productId) {
+            setPreviousOptions([...optionsData]);
+          }
+          setOptionsData([...optionsData, optionText]);
           setOptionText("");
           alert("Added new option!");
-          onSuccess();
         }catch (error) {
           console.error("Error adding option:", error);
         }
     }
 
+    // Create Product and insert into database
     const createProduct = () =>{
         try{
           database.runAsync(
@@ -167,6 +173,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         } 
     }
 
+    // Delete product and its associated options from database
     const deleteProduct = async () => {
       if(!productId) return;
       try{
@@ -188,10 +195,13 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     }
 
+
+    // Check if option already exists in optionsData
     const optionExists = (option: string) => {
       return optionsData.includes(option);
     }
 
+    // Delete selected options from both UI and database
     const deleteOption = async () => {
       if(selectedOptions.length === 0) return;
 
@@ -233,6 +243,17 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       console.log("Selected options:", selectedOptions);
     };
 
+    const handleCancel = () => {
+      if (hasOptions) {
+        setOptionsData(previousOptions);
+        setPreviousOptions([]);
+      }
+      else{
+        setOptionsData([]);
+      }
+      setExtraOptionsVisible(false);
+    }
+
 
     return(
         <Modal
@@ -241,10 +262,13 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             visible={isVisible}>
           <View style={styles.productModalView}>
             <View style={styles.productModalCard}>
+
+              {/* Product Name */}
               <Text style={styles.productModalText}>Add Product</Text>
-              
               {!extraOptionsVisible && (
                 <View style={styles.productOptions}>
+                  
+                  {/* Name Input */}
                   <TextInput
                     style={[styles.productNameInput, { color: '#fff' }]}
                     placeholder="Name"
@@ -252,6 +276,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     value={name}
                     onChangeText={(text) => setName(text)}
                   ></TextInput>
+
+                  {/* Price Input */}
                   <TextInput
                     style={styles.productNameInput}
                     placeholder="Price"
@@ -260,6 +286,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     value={price}
                     onChangeText={(text) => setPrice(text)}
                   ></TextInput>
+
+                  {/* Extra Options Button */}
                    <Pressable
                     style={styles.productModalButton}
                     onPress={() => {
@@ -267,19 +295,26 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     }}>
                     <Text style={{color: '#000'}}>Add Extra Options</Text>
                   </Pressable>
+
+                  {/* Update/Add Button */}
                   <Pressable
                     style={styles.productModalButton}
                     onPress={async () => {editMode ?  handleUpdate() : createProduct()}}>
                     <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
                   </Pressable>
+
+                  {/* Delete */}
                   {editMode && <Pressable
                     style={styles.productModalButton}
                     onPress={async () => deleteProduct()}>
                     <Text style={{color: '#000'}}>Delete</Text>
                   </Pressable>}
+
+                  {/* Cancel Button */}
                   <Pressable
                     style={styles.productModalButton}
                     onPress={() => {
+                      setOptionsData([]);
                       onClose();
                     }}>
                     <Text style={{color: '#000'}}>Cancel</Text>
@@ -287,9 +322,14 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 </View>
               )}
 
+
+
+              {/* Extra Options Section */}
               {extraOptionsVisible && (
                 <View style={styles.productOptions}>
                   <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={optionText} onChangeText={(text)=>setOptionText(text)}></TextInput>
+
+                  {/* List of options */}
                   <ScrollView style={styles.productModalExtraOptionsList} contentContainerStyle={{ paddingBottom: 30 }}>
                     {optionsData.map((option, index) => (
                       <Pressable key={index} onPress={() => handleOptionSelect(option)}>
@@ -298,7 +338,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                       </Pressable>
                     ))}
                   </ScrollView>
-                {optionText !== '' && (<Pressable
+
+                  {/* Add Option Button */}
+                {optionText !== '' && (
+                <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
                     if(!productId){
@@ -313,14 +356,17 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   }}>
                 <Text style={{color: '#000'}}>Add Option</Text>
                 </Pressable>)}
-                <Pressable
+
+                {/* Delete Option Button */}
+                {selectedOptions.length > 0 && (
+                  <Pressable
                     style={styles.productModalButton}
                     onPress={async () => {
                       deleteOption();
                     }}>
                     <Text style={{color: '#000'}}>Delete Option</Text>
-                  </Pressable>
-
+                  </Pressable>)}
+{/* 
                 {selectedOptions.length > 0 && (
                 <Pressable
                   onPress={() => {
@@ -330,14 +376,19 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   style={styles.productModalButton}
                 >
                   <Text style={{ color: '#000' }}>Clear Selection</Text>
-                </Pressable>)}
+                </Pressable>)} */}
 
+                {/* Back Button */}
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                    setExtraOptionsVisible(false);
+                    if (optionsData.length > 1) {
+                      handleCancel();
+                    } else {
+                      setExtraOptionsVisible(false);
+                    }
                   }}>
-                  <Text style={{color: '#000'}}>Back</Text>
+                  <Text style={{color: '#000'}}>{optionsData.length > 1 ? "Cancel" : "Back"}</Text>
                 </Pressable>
                   
                 </View>
