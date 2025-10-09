@@ -45,9 +45,9 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         }
     }, [isVisible, productId]);
 
-    useFocusEffect(() => {
-      // addColumnToTable();
-    })
+    // useFocusEffect(() => {
+    //   addColumnToTable();
+    // })
 
     // const addColumnToTable = async () => {
     //     try {
@@ -70,6 +70,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           name:string;
           email:string;
         }>
+
+        // Set name and price from fetched product data
         (`SELECT name, email FROM users WHERE id = ?;`, [productId]);
         if (result) {
             setName(result.name);
@@ -77,7 +79,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         } else {
             console.warn("No result found for the given ID.");
         }
-
+        
         //fetch options data
         const options = await database.getAllAsync<{user_id: number, option: string}>(
           `SELECT * FROM extra_options WHERE user_id=?`, [productId]
@@ -102,9 +104,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         
         try {
             database.runAsync(
-                `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
+                `UPDATE users SET name = ?, email = ?, hasOptions = ?, where id = ?`,
                 [name, price, hasOptions, productId]
             );
+
             alert("Product updated!");
             onSuccess();
             onClose();
@@ -139,7 +142,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             alert("Option already exists!");
             return;
           }
-          if(productId) {
+          if(hasOptions && previousOptions.length === 0){
             setPreviousOptions([...optionsData]);
           }
           setOptionsData([...optionsData, optionText]);
@@ -151,9 +154,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     }
 
     // Create Product and insert into database
-    const createProduct = () =>{
+    const createProduct = async () =>{
         try{
-          database.runAsync(
+          // Insert new product into users table
+          const result = await database.runAsync(
             "INSERT INTO users (name, email, count, hasOptions) VALUES(?, ?, ?, ?)",
             [
               name,
@@ -162,10 +166,20 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
               hasOptions
             ]
           );
+          const newID = result.lastInsertRowId;
+          console.log("New product ID:", newID);
+          // Insert each option into extra_options table with the new product's ID
+          for (const option of optionsData) {
+            database.runAsync(
+              "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+              [newID, option]
+            );
+          }
           alert("Added new product!");
           setName("");
           setPrice("");
           setHasOptions(false);
+          setOptionsData([]);
           onClose();
           onSuccess();
         } catch (error) {
@@ -201,6 +215,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       return optionsData.includes(option);
     }
 
+
     // Delete selected options from both UI and database
     const deleteOption = async () => {
       if(selectedOptions.length === 0) return;
@@ -231,9 +246,12 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         
         // If there's an error, reload data to ensure UI is in sync with database
         handleOptionChange();
-  }
+      }
     }
 
+
+
+    // For selecting options in the extra options list
     const handleOptionSelect = (option: string) => {
       if (selectedOptions.includes(option)) {
         setSelectedOptions(selectedOptions.filter((item) => item !== option));
@@ -245,10 +263,12 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     const handleCancel = () => {
       if (hasOptions) {
+        // The product had options before editing, so revert to previous options
         setOptionsData(previousOptions);
         setPreviousOptions([]);
       }
       else{
+        // The product didn't have options before editing, so clear all options
         setOptionsData([]);
       }
       setExtraOptionsVisible(false);
