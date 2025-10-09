@@ -143,6 +143,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                     //     await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
                     // }}>
                     onPress={async () => {
+                      if(!editMode){
                       if (await optionsExists(product.id)) {
                         openOptionsModal(product);
                       } else {
@@ -161,6 +162,11 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                         console.log("Product IDs:", productIds);
                         console.log("Current Products:", currProducts);
                       }
+                    } else {
+                      setCurrProduct(product);
+                      setProductId(product.id);
+                      setAddProductModalVisible(true);
+                    }
                     }}>
                     {/* <View style={styles.productCounterContainer}>
                         <Pressable 
