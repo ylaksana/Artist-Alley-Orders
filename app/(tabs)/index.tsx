@@ -215,10 +215,12 @@ export default function Index() {
         <View style={styles.container}>
             <Stack.Screen options={{headerLeft}}/>
             <Stack.Screen options={{headerRight}}/>
-           
-            {selectedProducts.length === 0 && (
-              <Text style={styles.title}>Click the plus button to start adding items!</Text>)}
-            {selectedProducts.length > 0 && (
+            <View style={styles.main}>
+            {selectedProducts.length === 0 ? (
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>Click the plus button to start adding items!</Text>
+              </View>
+            ) : (
               <ScrollView style={styles.scrollView}>
                 <View>{
                 // Count and Name of the selected products
@@ -261,6 +263,7 @@ export default function Index() {
                 </Pressable>
               </View>
             </View>
+          </View>
            
             
           <SelectProductModal
@@ -322,12 +325,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#25292e',
+        height: '100%',
     },
     title: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#6b7178',
         marginBottom: 20,
+        textAlign: 'center',
     },
     scrollView: {
         width: '100%',
@@ -397,5 +402,17 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       width: '100%',
       padding: 10,
+    },
+    main:{
+      flex: 1,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      padding: 10
+    },
+    titleContainer:{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
     }
 });
