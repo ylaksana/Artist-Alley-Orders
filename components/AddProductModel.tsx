@@ -401,16 +401,18 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 </Pressable>)} */}
 
                 {/* Back Button */}
+
+                {optionsData.length >= 1 &&
+                (<Pressable
+                  style={styles.productModalButton}
+                  onPress={async () => {setExtraOptionsVisible(false);}}>
+                  <Text style={{color: '#000'}}>Set</Text>
+                </Pressable>)}
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                    if (optionsData.length > 1) {
-                      handleCancel();
-                    } else {
-                      setExtraOptionsVisible(false);
-                    }
-                  }}>
-                  <Text style={{color: '#000'}}>{optionsData.length > 1 ? "Cancel" : "Back"}</Text>
+                      handleCancel();}}>
+                  <Text style={{color: '#000'}}>Cancel</Text>
                 </Pressable>
                   
                 </View>
