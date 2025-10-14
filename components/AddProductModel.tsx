@@ -107,7 +107,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 `UPDATE users SET name = ?, email = ?, hasOptions = ?, where id = ?`,
                 [name, price, hasOptions, productId]
             );
-
+            
             alert("Product updated!");
             onSuccess();
             onClose();
@@ -313,7 +313,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     onPress={() => {
                       setExtraOptionsVisible(true);
                     }}>
-                    <Text style={{color: '#000'}}>Add Extra Options</Text>
+                    <Text style={{color: '#000'}}>{productId ? "Edit Extra Options" : "Add Extra Options"}</Text>
                   </Pressable>
 
                   {/* Update/Add Button */}
@@ -347,7 +347,9 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
               {/* Extra Options Section */}
               {extraOptionsVisible && (
                 <View style={styles.productOptions}>
-                  <TextInput style={styles.productNameInput} placeholder="Option" placeholderTextColor={'#fff'} value={optionText} onChangeText={(text)=>setOptionText(text)}></TextInput>
+
+                  {/* Option Input */}
+                  <TextInput style={styles.productNameInput} placeholder="Type your option here.." placeholderTextColor={'#fff'} value={optionText} onChangeText={(text)=>setOptionText(text)}></TextInput>
 
                   {/* List of options */}
                   <ScrollView style={styles.productModalExtraOptionsList} contentContainerStyle={{ paddingBottom: 30 }}>
