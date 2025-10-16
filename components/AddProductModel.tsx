@@ -104,13 +104,17 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             );
             
             // Update existing options in the database
-            if (newOptions.length > 0) {
-              for (const option of newOptions) {
+            for (const option of newOptions) {
                 await database.runAsync(
-                  "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
-                  [productId, option]
+                    "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+                    [productId, option]
                 );
-              }
+            }
+            for (const option of deletedOptions) {
+                await database.runAsync(
+                    "DELETE FROM extra_options WHERE user_id = ? AND option = ?",
+                    [productId, option]
+                );
             }
             
             alert("Product updated!");
@@ -340,6 +344,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     onPress={() => {
                       setOptionsData([]);
                       setPreviousOptions([]);
+                      setNewOptions([]);
+                      setDeletedOptions([]);
                       setHasOptions(false);
                       setExtraOptionsVisible(false);
                       onClose();
@@ -387,7 +393,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   </Pressable>)}
 
 
-                {/* Clear Changes Button */}
+                {/* Revert Button */}
                 {newOptions.length > 0 || deletedOptions.length > 0 && (
                 <Pressable
                   style={styles.productModalButton}
@@ -397,13 +403,14 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     setNewOptions([]);
                     setSelectedOptions([]);
                   }}>
-                  <Text style={{color: '#000'}}>Revert</Text>
+                  <Text style={{color: '#000'}}>Revert Changes</Text>
                 </Pressable>)}
 
                 {/* Back Button */}
                 (<Pressable
                   style={styles.productModalButton}
                   onPress={async () => {{
+                    setSelectedOptions([]);
                     setExtraOptionsVisible(false);
                   }}}>
                   <Text style={{color: '#000'}}>Back</Text>
