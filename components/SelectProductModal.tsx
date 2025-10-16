@@ -83,6 +83,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
       // setCurrProduct(product);
       setCurrProducts(prev => [...prev, product]);
+      setProductIds(prev => [...prev, product.id]);
       setProductId(product.id);
       console.log("Product:", product);
       setOptionsModalVisible(true);
@@ -141,7 +142,14 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                     onPress={async () => {
                       if(!editMode){
                         if (await optionsExists(product.id)) {
+                          if(productIds.includes(product.id)) {
+                            //remove product from list
+                            setCurrProducts(prev => prev.filter(p => p.id !== product.id));
+                            setProductIds(prev => prev.filter(id => id !== product.id));
+                            console.log("Product IDs:", productIds);
+                          } else {
                           openOptionsModal(product);
+                          }
                         } else {
                         //add product to list if it doesn't already exist
                         const existsInSelection = productIds.includes(product.id);
@@ -244,9 +252,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
               onSuccess={(option: string) => {
                 setOptions(prev => [...prev, option]);
                 setOptionsModalVisible(false);
-                setCurrProduct(defaultProduct);
-                console.log("Product ID:", productId);
-                setProductId(null);
               }}
               onClose={() => {
                   setCurrProduct(defaultProduct);

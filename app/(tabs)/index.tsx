@@ -96,7 +96,7 @@ export default function Index() {
 
 
           // check if the product is already in the selectedProducts array
-          const index = productsCopy.findIndex(item => item.name === product.name)
+          const index = productsCopy.findIndex(item => item.name === productCopy.name)
           console.log("index:", index);
 
           
