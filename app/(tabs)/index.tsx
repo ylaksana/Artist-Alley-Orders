@@ -62,7 +62,7 @@ export default function Index() {
         )
       }
     
-
+      {/* Remove one product from the list */}
       const deleteProductFromList = (product: ProductType) => {
         product.count--;
         if (product.count < 1) {
@@ -71,65 +71,48 @@ export default function Index() {
         setSum(sum - parseInt(product.email));
       };
     
-    
+      {/* Add products to the list */}
       const addProductsToList = (products: ProductType[], option: string) => {
-        // // create product object with the selected product
-        // const newProduct = {...product};
-        // // console.log("newProduct:", newProduct);
         
-        // // check if the product has options, if so change the name
-        // console.log("option:", option);
-        // if(option !== ""){
-        //     newProduct.name += " " + option;
-        //     console.log("newProduct with option:", newProduct);
-        //   }
+        // create copies of the current state to modify the selectedProducts and sum states
+        const productsCopy = [...products];
+        let newSum = sum;
 
-        // // check if the product is already in the selectedProducts array
-        // const index = selectedProducts.findIndex(item => item.name === newProduct.name)
-        // // console.log("index:", index);
 
-        // // if the product is not in the array, add it
-        // if(index === -1){ 
-        //   newProduct.count = 1;
-        //   setSelectedProducts([...selectedProducts, newProduct]);
-        // }
-        // // if the product is already in the array, increase the count
-        // else{
-        //   selectedProducts[index].count += 1;
-        // }
-        // setSum(sum + parseInt(product.email));
-        // console.log(selectedProducts);
-        // console.log('option:', option);
-        // create product object with the selected product
-        // const newProducts = products.map(item => ({ ...item }));
-        // console.log("newProduct:", newProduct);
-        
-        // check if the product has options, if so change the name
-        // console.log("option:", option);
+        // go through each product to update counts and sum
         products.forEach(product => {
           console.log("Processing product:", product);
-          if(product.hasOptions){
-            product.name += " " + option;
-            console.log("newProduct with option:", product);
+          const productCopy = { ...product };
+          // check if the product has options, if so change the name
+          if(productCopy.hasOptions){
+            productCopy.name += " " + option;
+            console.log("newProduct with option:", productCopy);
+          }
 
           // check if the product is already in the selectedProducts array
-          const index = selectedProducts.findIndex(item => item.name === product.name)
-          // console.log("index:", index);
+          const index = productsCopy.findIndex(item => item.name === product.name)
+          console.log("index:", index);
 
           // if the product is not in the array, add it
           if(index === -1){ 
-            product.count = 1;
-            setSelectedProducts([...selectedProducts, product]);
+            productCopy.count = 1;
+            productsCopy.push(productCopy);
+            console.log("Product added:", productCopy);
           }
           // if the product is already in the array, increase the count
           else{
-            selectedProducts[index].count += 1;
+            productsCopy[index].count += 1;
           }
-          setSum(sum + parseInt(product.email));
-          console.log(selectedProducts);
-          console.log('option:', option);
-          }
+          newSum += parseInt(product.email);
+
+          console.log("Intermediate newSum:", newSum);
+          console.log("Intermediate productsCopy:", productsCopy);
         });
+
+
+        // finally update the state with all the changes
+        setSelectedProducts(productsCopy);
+        setSum(newSum);
       };
 
       const changeOrderInformation = (name: string, phone: string, address: string, sale: string) => {
@@ -216,11 +199,15 @@ export default function Index() {
             <Stack.Screen options={{headerLeft}}/>
             <Stack.Screen options={{headerRight}}/>
             <View style={styles.main}>
+
+              
             {selectedProducts.length === 0 ? (
+              /* Prompt to add products */
               <View style={styles.titleContainer}>
                 <Text style={styles.title}>Click the plus button to start adding items!</Text>
               </View>
             ) : (
+              /* List of Selected Products */
               <ScrollView style={styles.scrollView}>
                 <View>{
                 // Count and Name of the selected products
@@ -240,9 +227,18 @@ export default function Index() {
                 </View>
             </ScrollView>)}
 
-             {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
 
+
+            {/* Total Sum */}
+             {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
+            
+
+
+            {/* Buttons */}
             <View style={styles.buttonContainer}>
+              
+              
+              {/* Button to add products */}
                <View style={styles.button}>
                 <Pressable
                 style={styles.buttonText}
@@ -252,6 +248,8 @@ export default function Index() {
                 </Pressable>
               </View>
 
+
+              {/* Button to switch convention */}
               <View style={styles.button}>
                 <Pressable
                     style={styles.buttonText}
@@ -262,10 +260,12 @@ export default function Index() {
                     <Text>Switch Convention</Text>
                 </Pressable>
               </View>
+
+
             </View>
           </View>
            
-            
+            {/*  Modals  */}
           <SelectProductModal
             isVisible={SelectProductModalVisible}
             editMode={editMode}
@@ -273,7 +273,9 @@ export default function Index() {
               setSelectProductModalVisible(false);
               setEditMode(false);
             }}
-            onSuccess={(currProducts: ProductType[], option: string, productList?: ProductType[] | null) => {
+            // Get products and option from the modal
+            onSuccess={(currProducts: ProductType[], option: string) => {
+              console.log("Current Products on Success:", currProducts);
               addProductsToList(currProducts, option);
               console.log("selectedProducts:", selectedProducts);
               setSelectProductModalVisible(false);
