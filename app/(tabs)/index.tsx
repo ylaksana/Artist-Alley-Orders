@@ -24,20 +24,13 @@ export default function Index() {
     const [sale, setSale] = useState("Convention Sale");
     const [SelectProductModalVisible, setSelectProductModalVisible] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
-    const [sum, setSum] = useState(0);
+    const [sum, setSum] = useState<number>(0);
     const [editMode, setEditMode] = useState(false);
     const { selectedDatabase, clearSelectedDatabase } = useDatabaseContext();
     
     // Get database context
     const database = useSQLiteContext();
 
-    // useEffects
-    useEffect(() => {
-      if (name !== 'N/A') {  // Or some other condition to avoid initial render
-        // console.log(`Updated state: Name: ${name}, Phone: ${phone}, Address: ${address} Sale: ${sale}`);
-      }
-      console.log(`Selected database: ${selectedDatabase?.name}`);
-    }, [name, phone, address, sale]);  // This runs whenever these state values change  
 
 
     // functions
@@ -72,11 +65,12 @@ export default function Index() {
       };
     
       {/* Add products to the list */}
-      const addProductsToList = (products: ProductType[], options: string[]) => {
+      const addProductsToList = (products: ProductType[], options: [string, number][]) => {
         
         // create copies of the current state to modify the selectedProducts and sum states
         let productsCopy = [...selectedProducts];
         let newSum = sum;
+        console.log("Initial sum:", newSum);
 
         // options index
         let optionIndex = 0;
@@ -90,7 +84,7 @@ export default function Index() {
 
           // check if the product has options, if so change the name
           if(productCopy.hasOptions){
-            productCopy.name += " " + options[optionIndex];
+            productCopy.name += " " + options[optionIndex][0];
             optionIndex++;
           }
 
@@ -110,7 +104,10 @@ export default function Index() {
           else{
             productsCopy[index].count += 1;
           }
-          newSum += parseInt(product.email);
+
+          console.log("Product price:", parseInt(productCopy.email));
+          newSum += Number(productCopy.email);
+          console.log("New sum:", newSum);
         });
 
 
@@ -118,6 +115,8 @@ export default function Index() {
         setSelectedProducts(productsCopy);
         setSum(newSum);
       };
+
+
 
       const changeOrderInformation = (name: string, phone: string, address: string, sale: string) => {
         setSale(sale);
@@ -278,7 +277,7 @@ export default function Index() {
               setEditMode(false);
             }}
             // Get products and option from the modal
-            onSuccess={(currProducts: ProductType[], options: string[]) => {
+            onSuccess={(currProducts: ProductType[], options: [string, number][]) => {
               console.log("Current Products on Success:", currProducts);
               console.log("Options on Success:", options);
               addProductsToList(currProducts, options);
@@ -305,6 +304,8 @@ export default function Index() {
             }}
             />
 
+
+          {/* Bottom Header with Submit and Clear buttons */}
           {sum > 0 && (
             <View style={styles.bottomHeader}>
               <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />

@@ -14,14 +14,14 @@ type Props = {
     isVisible: boolean;
     editMode?: boolean;
     onClose: () => void;
-    onSuccess: (products: ProductType[], options: string[]) => void;
+    onSuccess: (products: ProductType[], options: [string, number][]) => void;
 }
 
 export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
   const [data, setData] = useState<ProductType[]>([]);
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-  const [options, setOptions] = useState<string[]>([]);
+  const [options, setOptions] = useState<[string, number][]>([]);
   const [productId, setProductId] = useState<number | null>(null);
   const [productIds, setProductIds] = useState<number[]>([]);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
@@ -81,7 +81,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
   const openOptionsModal = async (product: ProductType) => {
     // Check to see if options exist for this product
     if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
-      // setCurrProduct(product);
+      setCurrProduct(product);
       setCurrProducts(prev => [...prev, product]);
       setProductIds(prev => [...prev, product.id]);
       setProductId(product.id);
@@ -146,6 +146,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                             //remove product from list
                             setCurrProducts(prev => prev.filter(p => p.id !== product.id));
                             setProductIds(prev => prev.filter(id => id !== product.id));
+                            setOptions(prev => prev.filter(option => option[1] !== product.id));
                             console.log("Product IDs:", productIds);
                           } else {
                           openOptionsModal(product);
@@ -250,10 +251,13 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
               isVisible={optionsModalVisible}
               productId={productId}
               onSuccess={(option: string) => {
-                setOptions(prev => [...prev, option]);
+                setOptions(prev => [...prev, [option, productId as number]]);
                 setOptionsModalVisible(false);
               }}
               onClose={() => {
+                  currProducts.pop();
+                  productIds.pop();
+                  options.pop();
                   setCurrProduct(defaultProduct);
                   setOptionsModalVisible(false);
                   console.log("Product ID:", productId);
