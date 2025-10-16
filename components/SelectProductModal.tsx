@@ -14,19 +14,18 @@ type Props = {
     isVisible: boolean;
     editMode?: boolean;
     onClose: () => void;
-    // onSuccess: (product: ProductType, name: string) => void;
-    onSuccess: (products: ProductType[], name: string) => void;
+    onSuccess: (products: ProductType[], options: string[]) => void;
 }
 
 export default function SelectProductModal({isVisible, editMode, onClose, onSuccess}: Props) {
   const [data, setData] = useState<ProductType[]>([]);
   const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+  const [options, setOptions] = useState<string[]>([]);
   const [productId, setProductId] = useState<number | null>(null);
   const [productIds, setProductIds] = useState<number[]>([]);
   const [currProduct, setCurrProduct] = useState<ProductType>(defaultProduct);
   const [currProducts, setCurrProducts] = useState<ProductType[]>([]);
-  const [name, setName] = useState<string>("");
   const [products, setProducts] = useState<ProductType[]>([]);
   const [searching, setSearching] = useState<boolean>(false);
   const [searchText, setSearchText] = useState("");
@@ -129,6 +128,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
         <View style={styles.container}>
             <Stack.Screen options={{headerRight}}/>
             <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) =>{search(text)}}/>
+            {/* Product List */}
             <ScrollView
                 style={styles.scrollView}>
                 {data.map((product) => (
@@ -138,15 +138,11 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                         styles.cell, 
                         { backgroundColor: productIds.includes(product.id) ? '#525b66' : '#25292e' }
                     ]}
-                    // if the product has extra options, user needs to select them before adding to list, else add to list directly
-                    // onPress={async () => {
-                    //     await optionsExists(product.id) ? openOptionsModal(product) : setCurrProduct(product);
-                    // }}>
                     onPress={async () => {
                       if(!editMode){
-                      if (await optionsExists(product.id)) {
-                        openOptionsModal(product);
-                      } else {
+                        if (await optionsExists(product.id)) {
+                          openOptionsModal(product);
+                        } else {
                         //add product to list if it doesn't already exist
                         const existsInSelection = productIds.includes(product.id);
     
@@ -168,26 +164,6 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                       setAddProductModalVisible(true);
                     }
                     }}>
-                    {/* <View style={styles.productCounterContainer}>
-                        <Pressable 
-                        style={styles.productCountButton}
-                        onPress={() => {
-                            if (product.count > 0) {
-                            addProductToList(product, false);
-                            }
-                        }}>
-                        <FontAwesome name="minus-circle" size={24} color="#ffd33d"/> 
-                        </Pressable>
-                        <Text style={styles.productCounter}>{product.count}</Text>
-                        <Pressable 
-                        style={styles.productCountButton}
-                        onPress={() => {
-                            openOptionsModal(product);
-                            addProductToList(product, true);
-                        }}>
-                        <FontAwesome name="plus-circle" size={24} color="#ffd33d"/>
-                        </Pressable>
-                    </View> */}
                     <Text style={styles.text}>{product.name}, ${product.email}</Text>
                     
                     {editMode && (
@@ -205,25 +181,23 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 ))}    
             </ScrollView>
 
+
+
             
-
             <View style={styles.buttonContainer}>
-                {/* {!editMode && currProduct.name !== "" && (<Button label="Submit" theme="primary" onPress={() => {
-                  console.log("Name:", name);
-                  search("")
-                  onSuccess(currProduct, "")
-                }} />)} */}
 
-                 {!editMode && currProducts.length > 0 && (<Button label="Submit" theme="primary" onPress={() => {
+                {/* Submit Button */}
+                {!editMode && currProducts.length > 0 && (<Button label="Submit" theme="primary" onPress={() => {
                   console.log("Current Products on Submit:", currProducts);
                   search("")
-                  onSuccess(currProducts, "")
+                  onSuccess(currProducts, options)
                   setCurrProducts([]);
                   setProductIds([]);
+                  setOptions([]);
                 }} />)}
-                {/* add product button */}
 
-
+                
+                {/* Add Product Button */}
                 {/* If in edit mode and search bar is empty, allow users to add products */}
                 {editMode && !searching && (
                   <Button
@@ -233,12 +207,16 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                       setAddProductModalVisible(true);
                     }}/>
                 )}
+
+
+                {/* Back Button */}
                 <Button label="Back" theme = "primary" onPress={() =>
                   {
                     setCurrProduct(defaultProduct);
                     console.log(currProduct);
                     setCurrProducts([]);
                     setProductIds([]);
+                    setOptions([]);
                     onClose();
                   }
                   } />
@@ -264,8 +242,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
               isVisible={optionsModalVisible}
               productId={productId}
               onSuccess={(option: string) => {
-                console.log("Name 1:", option);
-                onSuccess(currProducts, option);
+                setOptions(prev => [...prev, option]);
                 setOptionsModalVisible(false);
                 setCurrProduct(defaultProduct);
                 console.log("Product ID:", productId);

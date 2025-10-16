@@ -17,8 +17,6 @@ type Props = PropsWithChildren<{
 export default function AddProductModal({isVisible, onSuccess, onClose, productId, database} : Props) {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
-    const [count, setCount] = useState(0);
-    const [hasOptions, setHasOptions] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [optionsData, setOptionsData] = useState<string[]>([]);
     const [optionText, setOptionText] = useState("");
@@ -35,7 +33,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             setName("");
             setPrice("");
             setEditMode(false);
-            setHasOptions(false);
             setPreviousOptions([]);
             setOptionsData([]);
             console.log("optionsData", optionsData);
@@ -74,9 +71,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           `SELECT * FROM extra_options WHERE user_id=?`, [productId]
         );
 
-        // Set hasOptions based on whether options exist
-        setHasOptions(options.length > 0);
-
         // Set optionsData to the list of option strings saved in database
         const optionsList = options.map((item) => item.option);
 
@@ -93,14 +87,21 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
 
     // Update product details in the database for existing product
-    const handleUpdate = async () => {
+    const updateProduct = async () => {
         if(!productId) return;
-        
+
+        const hasOptions = (previousOptions.length + newOptions.length) - deletedOptions.length > 0;
+
+        if (hasOptions) {
+          console.log("Options remain.");
+        } else {
+          console.log("No options remain.");
+        }
         
         try {
-            database.runAsync(
-                `UPDATE users SET name = ?, email = ?, hasOptions = ?, where id = ?`,
-                [name, price, hasOptions, productId]
+            await database.runAsync(
+                `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
+                [name, price, hasOptions ? 1 : 0, productId]
             );
             
             // Update existing options in the database
@@ -116,8 +117,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     [productId, option]
                 );
             }
-            
+
+
             alert("Product updated!");
+            setDeletedOptions([]);
+            setNewOptions([]);
             onSuccess();
             onClose();
         }catch (error) {
@@ -134,8 +138,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             [
               name,
               price,
-              count,
-              hasOptions
+              0,
+              newOptions.length > 0 ? 1 : 0,
             ]
           );
           const newID = result.lastInsertRowId;
@@ -150,7 +154,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           alert("Added new product!");
           setName("");
           setPrice("");
-          setHasOptions(false);
           setOptionsData([]);
           onClose();
           onSuccess();
@@ -219,7 +222,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             alert("Option already exists!");
             return;
           }
-          if(!hasOptions) setHasOptions(true);
 
           // If editing an existing product, manage newOptions and deletedOptions lists
 
@@ -327,7 +329,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   {/* Update/Add Button */}
                   <Pressable
                     style={styles.productModalButton}
-                    onPress={async () => {editMode ?  handleUpdate() : createProduct()}}>
+                    onPress={async () => {editMode ?  updateProduct() : createProduct()}}>
                     <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
                   </Pressable>
 
@@ -346,7 +348,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                       setPreviousOptions([]);
                       setNewOptions([]);
                       setDeletedOptions([]);
-                      setHasOptions(false);
                       setExtraOptionsVisible(false);
                       onClose();
                     }}>

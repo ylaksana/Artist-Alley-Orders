@@ -72,27 +72,34 @@ export default function Index() {
       };
     
       {/* Add products to the list */}
-      const addProductsToList = (products: ProductType[], option: string) => {
+      const addProductsToList = (products: ProductType[], options: string[]) => {
         
         // create copies of the current state to modify the selectedProducts and sum states
-        const productsCopy = [...products];
+        let productsCopy = [...selectedProducts];
         let newSum = sum;
+
+        // options index
+        let optionIndex = 0;
 
 
         // go through each product to update counts and sum
         products.forEach(product => {
           console.log("Processing product:", product);
           const productCopy = { ...product };
+
+
           // check if the product has options, if so change the name
           if(productCopy.hasOptions){
-            productCopy.name += " " + option;
-            console.log("newProduct with option:", productCopy);
+            productCopy.name += " " + options[optionIndex];
+            optionIndex++;
           }
+
 
           // check if the product is already in the selectedProducts array
           const index = productsCopy.findIndex(item => item.name === product.name)
           console.log("index:", index);
 
+          
           // if the product is not in the array, add it
           if(index === -1){ 
             productCopy.count = 1;
@@ -104,9 +111,6 @@ export default function Index() {
             productsCopy[index].count += 1;
           }
           newSum += parseInt(product.email);
-
-          console.log("Intermediate newSum:", newSum);
-          console.log("Intermediate productsCopy:", productsCopy);
         });
 
 
@@ -274,9 +278,10 @@ export default function Index() {
               setEditMode(false);
             }}
             // Get products and option from the modal
-            onSuccess={(currProducts: ProductType[], option: string) => {
+            onSuccess={(currProducts: ProductType[], options: string[]) => {
               console.log("Current Products on Success:", currProducts);
-              addProductsToList(currProducts, option);
+              console.log("Options on Success:", options);
+              addProductsToList(currProducts, options);
               console.log("selectedProducts:", selectedProducts);
               setSelectProductModalVisible(false);
               }}/>
