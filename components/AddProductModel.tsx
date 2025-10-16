@@ -245,15 +245,26 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     }
 
 
-    // Delete selected options from both UI and database
+    // Delete selected options from optionsData
     const deleteOption = async () => {
       if(selectedOptions.length === 0) return;
 
-      const deletedOptions =  new Set(selectedOptions);
+      let optionsCopy = [...optionsData];
 
-      // Update UI immediately
-      setOptionsData(optionsData.filter(option => !deletedOptions.has(option)));
-      setSelectedOptions([]);
+      for (const option of selectedOptions) {
+        if (optionInNewList(option)) {
+          // If option is newly added in this session, just remove it from optionsData and newOptions
+          setNewOptions(newOptions.filter((item) => item !== option));
+        }
+        else{
+          // If option exists in previousOptions, it means it's stored in the database
+          deletedOptions.push(option); // Mark it for deletion from database
+        }
+        optionsCopy = optionsCopy.filter((item) => item !== option); // Remove from current optionsData
+      }
+
+      setOptionsData(optionsCopy);
+      setSelectedOptions([]); // Clear selected options after deletion
     }
 
 
@@ -376,26 +387,27 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   </Pressable>)}
 
 
-                {/* Set Button */}
-                {optionsData.length >= 1 &&
+                {/* Clear Changes Button */}
+                {newOptions.length > 0 || deletedOptions.length > 0 && (
+                <Pressable
+                  style={styles.productModalButton}
+                  onPress={async () => {
+                    setOptionsData(previousOptions);
+                    setDeletedOptions([]);
+                    setNewOptions([]);
+                    setSelectedOptions([]);
+                  }}>
+                  <Text style={{color: '#000'}}>Revert</Text>
+                </Pressable>)}
+
+                {/* Back Button */}
                 (<Pressable
                   style={styles.productModalButton}
                   onPress={async () => {{
                     setExtraOptionsVisible(false);
                   }}}>
-                  <Text style={{color: '#000'}}>Set</Text>
-                </Pressable>)}
-
-
-                {/* Back Button */}
-                <Pressable
-                  style={styles.productModalButton}
-                  onPress={async () => {
-                    setOptionsData(previousOptions);
-                    setExtraOptionsVisible(false);
-                  }}>
                   <Text style={{color: '#000'}}>Back</Text>
-                </Pressable>
+                </Pressable>)
                   
                 </View>
               )}
