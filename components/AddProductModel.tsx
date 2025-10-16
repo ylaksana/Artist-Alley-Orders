@@ -106,12 +106,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
               const indexToAddFrom = optionsData.length - newOptionsCount;
               const optionsToAdd = optionsData.slice(indexToAddFrom);
               console.log("New options to add:", optionsToAdd);
-              // for (const option of optionsToAdd) {
-              //   database.runAsync(
-              //     "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
-              //     [productId, option]
-              //   );
-              // }
             }
             
             alert("Product updated!");
@@ -122,13 +116,15 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         }
     }
 
+
+    // Fetch existing options from database to avoid duplicates
     const handleOptionChange = async () => {
       try{
         const result = await database.getAllAsync<{user_id: number, option: string}>(`SELECT * FROM extra_options`);
   
         const optionList = result.map((item) => item.option);
   
-        const filteredOptions = optionsData.filter((option) => !optionList.includes(option));
+        const filteredOptions = optionsData.filter((option) => !optionList.includes(option));1
         const allOptions = [...optionList, ...filteredOptions];
         console.log("All options:", allOptions);
         setOptionsData(allOptions);
@@ -138,12 +134,12 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     };
 
+
     // Add new option to extra options
     // If there's a productId, backup original options are stored in the database
     const addOption = async () => {
         console.log("Adding option:", optionText);
         try{
-          console.log("Adding option:", optionText);
           if (optionExists(optionText)) {
             alert("Option already exists!");
             return;
@@ -151,11 +147,15 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           if(!hasOptions) setHasOptions(true);
           setOptionsData([...optionsData, optionText]);
           setOptionText("");
+          newOptionsCount += 1;
+
           alert("Added new option!");
+          console.log("optionsData after adding:", optionsData);
         }catch (error) {
           console.error("Error adding option:", error);
         }
     }
+
 
     // Create Product and insert into database
     const createProduct = async () =>{
@@ -253,9 +253,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     }
 
-    
-
-
 
     // For selecting options in the extra options list
     const handleOptionSelect = (option: string) => {
@@ -266,21 +263,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
       console.log("Selected options:", selectedOptions);
     };
-
-
-    // Handle cancel action in extra options section
-    // const handleCancel = () => {
-    //   if (hasOptions) {
-    //     // The product had options before editing, so revert to previous options
-    //     setOptionsData(previousOptions);
-    //     setPreviousOptions([]);
-    //   }
-    //   else{
-    //     // The product didn't have options before editing, so clear all options
-    //     setOptionsData([]);
-    //   }
-    //   setExtraOptionsVisible(false);
-    // }
 
 
     return(
@@ -376,17 +358,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 {optionText !== '' && (
                 <Pressable
                   style={styles.productModalButton}
-                  onPress={async () => {
-                    if(!productId){
-                      setOptionsData([...optionsData, optionText]);
-                      setOptionText("");
-                      // alert("Option added locally. Save the product to store it permanently.");
-                    }
-                    else{
-                      addOption();
-                      handleOptionChange();
-                    }
-                  }}>
+                  onPress={async () => addOption()}>
                 <Text style={{color: '#000'}}>Add Option</Text>
                 </Pressable>)}
 
