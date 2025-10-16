@@ -22,10 +22,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [editMode, setEditMode] = useState(false);
     const [optionsData, setOptionsData] = useState<string[]>([]);
     const [optionText, setOptionText] = useState("");
-    const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [extraOptionsVisible, setExtraOptionsVisible] = useState(false);
     const [previousOptions, setPreviousOptions] = useState<string[]>([]);
-    let newOptionsCount = 0;
+    const [newOptions, setNewOptions] = useState<string[]>([]);
+    const [deletedOptions, setDeletedOptions] = useState<string[]>([]);
+    const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
     
 
@@ -101,11 +102,15 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 `UPDATE users SET name = ?, email = ?, hasOptions = ?, where id = ?`,
                 [name, price, hasOptions, productId]
             );
-
-            if(newOptionsCount > 0){
-              const indexToAddFrom = optionsData.length - newOptionsCount;
-              const optionsToAdd = optionsData.slice(indexToAddFrom);
-              console.log("New options to add:", optionsToAdd);
+            
+            // Update existing options in the database
+            if (newOptions.length > 0) {
+              for (const option of newOptions) {
+                await database.runAsync(
+                  "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+                  [productId, option]
+                );
+              }
             }
             
             alert("Product updated!");
@@ -115,47 +120,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             console.error("Error updating product:", error);
         }
     }
-
-
-    // Fetch existing options from database to avoid duplicates
-    const handleOptionChange = async () => {
-      try{
-        const result = await database.getAllAsync<{user_id: number, option: string}>(`SELECT * FROM extra_options`);
-  
-        const optionList = result.map((item) => item.option);
-  
-        const filteredOptions = optionsData.filter((option) => !optionList.includes(option));1
-        const allOptions = [...optionList, ...filteredOptions];
-        console.log("All options:", allOptions);
-        setOptionsData(allOptions);
-      }
-      catch (error) {
-        console.error("Error fetching options:", error);
-      }
-    };
-
-
-    // Add new option to extra options
-    // If there's a productId, backup original options are stored in the database
-    const addOption = async () => {
-        console.log("Adding option:", optionText);
-        try{
-          if (optionExists(optionText)) {
-            alert("Option already exists!");
-            return;
-          }
-          if(!hasOptions) setHasOptions(true);
-          setOptionsData([...optionsData, optionText]);
-          setOptionText("");
-          newOptionsCount += 1;
-
-          alert("Added new option!");
-          console.log("optionsData after adding:", optionsData);
-        }catch (error) {
-          console.error("Error adding option:", error);
-        }
-    }
-
 
     // Create Product and insert into database
     const createProduct = async () =>{
@@ -189,7 +153,9 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         } catch (error) {
           console.error("Error adding product:", error);
         } 
-    }
+      }
+
+
 
     // Delete product and its associated options from database
     const deleteProduct = async () => {
@@ -214,9 +180,68 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     }
 
 
+
+
+
+    // Boolean functions to check if an option is in a list
+
     // Check if option already exists in optionsData
     const optionExists = (option: string) => {
       return optionsData.includes(option);
+    }
+
+    // Check if option exists in previousOptions (original options from database)
+    const optionInPreviousList = (option: string) => {
+      return previousOptions.includes(option);
+    }
+
+    // Check if option exists in deletedOptions (options marked for deletion)
+    const optionInDeletedList = (option: string) => {
+      return deletedOptions.includes(option);
+    }
+
+    // Check if option exists in newOptions (options added in current session)
+    const optionInNewList = (option: string) => {
+      return newOptions.includes(option);
+    }
+
+    
+    // Add new option to extra options
+    // If there's a productId, backup original options are stored in the database
+    const addOption = async () => {
+        console.log("Adding option:", optionText);
+        try{
+          if (optionExists(optionText)) {
+            alert("Option already exists!");
+            return;
+          }
+          if(!hasOptions) setHasOptions(true);
+
+          // If editing an existing product, manage newOptions and deletedOptions lists
+
+          // If option was in previousOptions and also in deletedOptions, it means user is re-adding a previously deleted option
+          if(optionInPreviousList(optionText) && optionInDeletedList(optionText)){
+            setOptionsData([...optionsData, optionText]);
+          }
+          // If option is in newOptions, it means user is trying to add a duplicate new option
+          else if(optionInPreviousList(optionText) && !optionInDeletedList(optionText)){
+            alert("Option already exists!");
+            return;
+          }
+          // If option is not in previousOptions and not in newOptions, it's a completely new option
+          else{
+            setOptionsData([...optionsData, optionText]);
+            setNewOptions([...newOptions, optionText]);
+          }
+
+          // Clear the input box after adding
+          setOptionText("");
+
+          alert("Added new option!");
+          console.log("optionsData after adding:", optionsData);
+        }catch (error) {
+          console.error("Error adding option:", error);
+        }
     }
 
 
@@ -224,33 +249,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const deleteOption = async () => {
       if(selectedOptions.length === 0) return;
 
-      const deletedOptions =  [...selectedOptions];
+      const deletedOptions =  new Set(selectedOptions);
 
       // Update UI immediately
-      setOptionsData(optionsData.filter(option => !selectedOptions.includes(option)));
+      setOptionsData(optionsData.filter(option => !deletedOptions.has(option)));
       setSelectedOptions([]);
-      
-      // Then perform database operations in the background
-      try {
-        if(productId){
-          for (const option of deletedOptions) {
-            await database.runAsync(
-              `DELETE FROM extra_options WHERE user_id = ? AND option = ?`,
-              [productId, option]
-            );
-          }
-        }
-        else{
-          setOptionsData(optionsData.filter(option => !deletedOptions.includes(option)));
-        }
-        alert("Delete successful!");
-      } catch (error) {
-        console.error("Error deleting option:", error);
-        alert("Error deleting option: " + error);
-        
-        // If there's an error, reload data to ensure UI is in sync with database
-        handleOptionChange();
-      }
     }
 
 
@@ -374,11 +377,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
 
                 {/* Set Button */}
-                {optionsData.length >= 1 && optionsData.length > previousOptions.length &&
+                {optionsData.length >= 1 &&
                 (<Pressable
                   style={styles.productModalButton}
                   onPress={async () => {{
-                    setPreviousOptions(optionsData);
                     setExtraOptionsVisible(false);
                   }}}>
                   <Text style={{color: '#000'}}>Set</Text>
