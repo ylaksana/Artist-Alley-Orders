@@ -25,6 +25,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [extraOptionsVisible, setExtraOptionsVisible] = useState(false);
     const [previousOptions, setPreviousOptions] = useState<string[]>([]);
+    let newOptionsCount = 0;
+
     
 
     useEffect(() => {
@@ -32,6 +34,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             setName("");
             setPrice("");
             setEditMode(false);
+            setHasOptions(false);
+            setPreviousOptions([]);
             setOptionsData([]);
             console.log("optionsData", optionsData);
             return;
@@ -45,22 +49,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         }
     }, [isVisible, productId]);
 
-    // useFocusEffect(() => {
-    //   addColumnToTable();
-    // })
-
-    // const addColumnToTable = async () => {
-    //     try {
-    //         await database.runAsync(
-    //             `ALTER TABLE users
-    //             ADD COLUMN hasOptions BOOLEAN DEFAULT 0`
-    //         );
-    //         console.log("Successfully added column count to users table.");
-    //     }
-    //     catch (error) {
-    //         console.error("Error adding column to table:", error);
-    //     }
-    //   }
 
     const loadData = async () =>{
         if(!productId) return;
@@ -90,8 +78,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
         // Set optionsData to the list of option strings saved in database
         const optionsList = options.map((item) => item.option);
+
+        // Set optionsData and previousOptions to the fetched options
         setOptionsData(optionsList);
-        console.log("Options data:", optionsList);
+        setPreviousOptions(optionsList); // Backup original options in case of cancel
+        console.log(`Loaded options for addProductModal:`, optionsList);
 
       }
       catch (error) {
@@ -99,14 +90,29 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     };
 
+
+    // Update product details in the database for existing product
     const handleUpdate = async () => {
         if(!productId) return;
+        
         
         try {
             database.runAsync(
                 `UPDATE users SET name = ?, email = ?, hasOptions = ?, where id = ?`,
                 [name, price, hasOptions, productId]
             );
+
+            if(newOptionsCount > 0){
+              const indexToAddFrom = optionsData.length - newOptionsCount;
+              const optionsToAdd = optionsData.slice(indexToAddFrom);
+              console.log("New options to add:", optionsToAdd);
+              // for (const option of optionsToAdd) {
+              //   database.runAsync(
+              //     "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+              //     [productId, option]
+              //   );
+              // }
+            }
             
             alert("Product updated!");
             onSuccess();
@@ -142,9 +148,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             alert("Option already exists!");
             return;
           }
-          if(hasOptions && previousOptions.length === 0){
-            setPreviousOptions([...optionsData]);
-          }
+          if(!hasOptions) setHasOptions(true);
           setOptionsData([...optionsData, optionText]);
           setOptionText("");
           alert("Added new option!");
@@ -249,6 +253,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       }
     }
 
+    
+
 
 
     // For selecting options in the extra options list
@@ -261,18 +267,20 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       console.log("Selected options:", selectedOptions);
     };
 
-    const handleCancel = () => {
-      if (hasOptions) {
-        // The product had options before editing, so revert to previous options
-        setOptionsData(previousOptions);
-        setPreviousOptions([]);
-      }
-      else{
-        // The product didn't have options before editing, so clear all options
-        setOptionsData([]);
-      }
-      setExtraOptionsVisible(false);
-    }
+
+    // Handle cancel action in extra options section
+    // const handleCancel = () => {
+    //   if (hasOptions) {
+    //     // The product had options before editing, so revert to previous options
+    //     setOptionsData(previousOptions);
+    //     setPreviousOptions([]);
+    //   }
+    //   else{
+    //     // The product didn't have options before editing, so clear all options
+    //     setOptionsData([]);
+    //   }
+    //   setExtraOptionsVisible(false);
+    // }
 
 
     return(
@@ -335,6 +343,9 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     style={styles.productModalButton}
                     onPress={() => {
                       setOptionsData([]);
+                      setPreviousOptions([]);
+                      setHasOptions(false);
+                      setExtraOptionsVisible(false);
                       onClose();
                     }}>
                     <Text style={{color: '#000'}}>Cancel</Text>
@@ -388,31 +399,28 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     }}>
                     <Text style={{color: '#000'}}>Delete Option</Text>
                   </Pressable>)}
-{/* 
-                {selectedOptions.length > 0 && (
-                <Pressable
-                  onPress={() => {
-                    setSelectedOptions([])
-                    setHasOptions(false);
-                  }}
-                  style={styles.productModalButton}
-                >
-                  <Text style={{ color: '#000' }}>Clear Selection</Text>
-                </Pressable>)} */}
 
-                {/* Back Button */}
 
-                {optionsData.length >= 1 &&
+                {/* Set Button */}
+                {optionsData.length >= 1 && optionsData.length > previousOptions.length &&
                 (<Pressable
                   style={styles.productModalButton}
-                  onPress={async () => {setExtraOptionsVisible(false);}}>
+                  onPress={async () => {{
+                    setPreviousOptions(optionsData);
+                    setExtraOptionsVisible(false);
+                  }}}>
                   <Text style={{color: '#000'}}>Set</Text>
                 </Pressable>)}
+
+
+                {/* Back Button */}
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                      handleCancel();}}>
-                  <Text style={{color: '#000'}}>Cancel</Text>
+                    setOptionsData(previousOptions);
+                    setExtraOptionsVisible(false);
+                  }}>
+                  <Text style={{color: '#000'}}>Back</Text>
                 </Pressable>
                   
                 </View>
