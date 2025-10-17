@@ -2,7 +2,7 @@ import {Text, View, StyleSheet, ScrollView, Pressable} from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useLocalSearchParams } from 'expo-router';
 import {useState, useEffect, useCallback} from 'react';
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, router} from "expo-router";
 
 import OrderModal from '@/components/OrderModal';
 import { useDatabaseContext } from '../_layout';
@@ -28,23 +28,42 @@ export type ProductItem = {
 
 export default function OrderHistoryScreen() {
     const { selectedDatabase } = useDatabaseContext();
+    const database = useSQLiteContext();
     const [orderModalVisible, setOrderModalVisible] = useState(false);
     const [data, setData] = useState<OrderType[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
-    const database = useSQLiteContext();
     const [pageNumber, setPageNumber] = useState<number>(1);
-
     
-
-    console.log('Order History - Selected Database:', selectedDatabase);
 
     useFocusEffect(
         useCallback(() => {
-            goToPage(pageNumber);
-            checkSoldProducts();
-        }
-        , [])
+            if (selectedDatabase) {
+                goToPage(pageNumber);
+                checkSoldProducts();
+            }
+        }, [selectedDatabase, pageNumber])
     );
+    
+    // Guard: redirect if no database selected
+    useEffect(() => {
+        if (!selectedDatabase) {
+            console.log('No database selected, redirecting...');
+            router.replace('/');
+        }
+    }, [selectedDatabase]);
+
+
+    if (!selectedDatabase) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.text}>Loading...</Text>
+            </View>
+        );
+    }
+
+    console.log('Order History - Selected Database:', selectedDatabase);
+
+    
     
     // const updateSoldProductsTable = async () => {
     //     try {

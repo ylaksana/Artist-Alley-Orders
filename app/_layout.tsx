@@ -1,11 +1,8 @@
 // app/_layout.tsx (Root Layout with Inline Context)
 import { Stack } from "expo-router";
-import {LogBox} from 'react-native';
 import { StatusBar } from "expo-status-bar";
 import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-LogBox.ignoreAllLogs(true);
 
 // Database Context defined right here in the layout file
 interface DatabaseInfo {
