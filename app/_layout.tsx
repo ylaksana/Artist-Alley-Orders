@@ -67,6 +67,7 @@ export default function RootLayout() {
     dbInitialized = true;
 
     try{
+      await db.execAsync(`PRAGMA foreign_keys = ON;`);
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS databases (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +82,7 @@ export default function RootLayout() {
           name TEXT,
           email TEXT,
           count INTEGER,
-          hasOptions BOOLEAN DEFAULT 0
+          hasOptions INTEGER DEFAULT 0
         );`
       );
       console.log("Products table created successfully.");
@@ -118,7 +119,7 @@ export default function RootLayout() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER,
           option TEXT,
-          FOREIGN KEY (user_id) REFERENCES orders(id)
+          FOREIGN KEY (user_id) REFERENCES users(id)
         );`
       );
       console.log("Extra options table created successfully.");
@@ -146,7 +147,6 @@ export default function RootLayout() {
             name="index" 
             options={{ 
               headerShown: true,
-              title: "Select Database",
             }} 
           />
           

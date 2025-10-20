@@ -408,14 +408,14 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 </Pressable>)}
 
                 {/* Back Button */}
-                (<Pressable
+                <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {{
                     setSelectedOptions([]);
                     setExtraOptionsVisible(false);
                   }}}>
                   <Text style={{color: '#000'}}>Back</Text>
-                </Pressable>)
+                </Pressable>
                   
                 </View>
               )}
