@@ -6,9 +6,14 @@ import { router, useFocusEffect, Stack} from 'expo-router';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import EnterInfoModal from '@/components/EnterInfoModal';
 import WarningModal from '@/components/WarningModal';
-import { DatabaseInfo } from '@/unused/old-database-list';
 import { useDatabaseContext } from './_layout';
 
+
+export interface DatabaseInfo {
+  id: string;
+  name: string;
+  createdAt: string;
+}
 
 export default function DatabaseList() {
   const headerRight = () => {

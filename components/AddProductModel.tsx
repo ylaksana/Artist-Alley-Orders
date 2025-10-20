@@ -395,7 +395,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
 
                 {/* Revert Button */}
-                {newOptions.length > 0 || deletedOptions.length > 0 && (
+                {(newOptions.length > 0 || deletedOptions.length > 0) && (
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
@@ -410,7 +410,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 {/* Back Button */}
                 <Pressable
                   style={styles.productModalButton}
-                  onPress={async () => {{
+                  onPress={() => {{
                     setSelectedOptions([]);
                     setExtraOptionsVisible(false);
                   }}}>

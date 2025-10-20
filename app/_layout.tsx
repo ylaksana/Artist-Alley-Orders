@@ -65,9 +65,10 @@ export default function RootLayout() {
     
     console.log("Checking if database needs to be created...");
     dbInitialized = true;
+    
+    await db.execAsync(`PRAGMA foreign_keys = ON;`);
 
     try{
-      await db.execAsync(`PRAGMA foreign_keys = ON;`);
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS databases (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,6 +127,8 @@ export default function RootLayout() {
       }
       catch (error) { 
         console.error("Error creating tables:", error);
+        dbInitialized = false;
+        throw error;
       }
     
   };

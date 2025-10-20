@@ -1,8 +1,8 @@
-import { Text, View, StyleSheet, ScrollView, Pressable, Modal, TextInput} from "react-native";
+import { Text, View, StyleSheet, ScrollView, Pressable} from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
-import { Stack, useFocusEffect, useLocalSearchParams, router} from "expo-router";
+import { Stack, router} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState, useCallback, useEffect, } from "react";
+import { useState, useEffect, } from "react";
 import { ProductType} from "@/types";
 
 import SelectProductModal from "@/components/SelectProductModal";

@@ -3,7 +3,7 @@ export type ProductType = {
     name: string;
     email: string;
     count: number;
-    hasOptions: boolean;
+    hasOptions: number;
 }
 
 export const defaultProduct: ProductType = {
@@ -11,5 +11,5 @@ export const defaultProduct: ProductType = {
     name: "",
     email: "",
     count: 0,
-    hasOptions: false
+    hasOptions: 0
 }
