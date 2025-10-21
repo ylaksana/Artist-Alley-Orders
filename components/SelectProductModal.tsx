@@ -128,7 +128,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
     >
         <View style={styles.container}>
             <Stack.Screen options={{headerRight}}/>
-            <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) =>{search(text)}}/>
+            <TextInput style={styles.searchInput} placeholder="Search" placeholderTextColor={'#525b66'} value={searchText} onChangeText={(text) => search(text)}/>
             {/* Product List */}
             <ScrollView
                 style={styles.scrollView}>

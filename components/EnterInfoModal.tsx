@@ -22,10 +22,17 @@ export default function EnterInfoModal({ isVisible, onClose, onSuccess } : Props
                 <TextInput 
                     style={styles.textBox}
                     placeholder="Name"
+                    value={name}
                     onChangeText={(text) => setName(text)}
                 />
-                <Button label="Submit" theme="primary" onPress={() => onSuccess(name)} />
-                <Button label="Cancel" theme="primary" onPress={onClose} />
+                <Button label="Submit" theme="primary" onPress={() => {
+                    onSuccess(name);
+                    setName("");
+                }} />
+                <Button label="Cancel" theme="primary" onPress={() => {
+                    setName("");
+                    onClose();
+                }} />
             </View>
         </Modal>
             

@@ -15,7 +15,7 @@ export interface DatabaseInfo {
   createdAt: string;
 }
 
-export default function DatabaseList() {
+export default function Index() {
   const headerRight = () => {
         return(
           <Pressable style={{marginLeft: 5, padding: 10}} onPress={() => setEnterInfoModalVisible(true)}>
@@ -42,14 +42,22 @@ export default function DatabaseList() {
   );
 
   const loadDatabases = async () => {
-      try {
-        const result: DatabaseInfo[] = await db.getAllAsync('SELECT * FROM databases');
-        console.log('Loaded databases:', result); // Add logging to debug
-        setDatabases(result);
-      } catch (error) {
-        console.error('Error loading databases:', error);
+    try {
+      // Check if db context exists and is ready
+      if (!db) {
+        console.log('Database not ready yet');
+        return;
       }
-    };
+      
+      const result: DatabaseInfo[] = await db.getAllAsync('SELECT * FROM databases');
+      console.log('Loaded databases:', result);
+      setDatabases(result);
+    } catch (error) {
+      console.error('Error loading databases:', error);
+      // Don't crash - just set empty array
+      setDatabases([]);
+    }
+  };
 
   // Function to create databases
   const createDatabase = async (name : string) => {

@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { View, Text } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 
 // Database Context defined right here in the layout file
 interface DatabaseInfo {
@@ -54,23 +54,13 @@ function DatabaseProvider({ children }: { children: ReactNode }) {
   );
 }
 
-let dbInitialized = false;
-
 export default function RootLayout() {
-  const [dbError, setDbError] = React.useState<string | null>(null);
-  const createDBIfNeeded = async (db:SQLiteDatabase) => {
-    // This function can be used to initialize the database if needed
-    if (dbInitialized) {
-      console.log("Database already initialized, skipping...");
-      return;
-    }
+  const [error, setError] = React.useState<string | null>(null);
+  const [isReady, setIsReady] = React.useState(false);
+  const createDBIfNeeded = React.useCallback(async (db:SQLiteDatabase) => {
     
-    console.log("Checking if database needs to be created...");
-    dbInitialized = true;
-    
-    await db.execAsync(`PRAGMA foreign_keys = ON;`);
-
     try{
+      await db.execAsync(`PRAGMA foreign_keys = ON;`);
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS databases (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -126,30 +116,48 @@ export default function RootLayout() {
         );`
       );
       console.log("Extra options table created successfully.");
+      setTimeout(() => setIsReady(true), 100);
+
       }
       catch (error) {
         console.error("Error creating tables:", error);
-        setDbError(error instanceof Error ? error.message : String(error));
-        dbInitialized = false;
-        throw error;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setError(errorMessage);
       }
-  };
+  }, []);
   
-  if (dbError) {
+  if (error) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#25292e', padding: 20 }}>
-        <Text style={{ color: '#fff', fontSize: 16, textAlign: 'center' }}>
-          Database Error: {dbError}
+        <Text style={{ color: '#ffd33d', fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>
+          Database Error
+        </Text>
+        <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center' }}>
+          {error}
         </Text>
       </View>
     );
   }
 
+ 
+
 
   return (
     <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
       <DatabaseProvider>
-        <StatusBar style="light"/>
+        <StatusBar style="light"
+          translucent={false}
+          backgroundColor="#25292e"
+        />
+           {/* Show loading screen until database is ready */}
+          {!isReady ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#25292e' }}>
+              <ActivityIndicator size="large" color="#ffd33d" />
+              <Text style={{ color: '#fff', fontSize: 16, marginTop: 20 }}>
+                Initializing database...
+              </Text>
+            </View>
+          ) : (
         <Stack
           screenOptions={{
             headerStyle: {
@@ -158,10 +166,10 @@ export default function RootLayout() {
             headerTintColor: '#fff',
             headerShadowVisible: false,
           }}
-          initialRouteName="database-list"
+          initialRouteName="index"
         >
           <Stack.Screen 
-            name="database-list" 
+            name="index" 
             options={{ 
               headerShown: true,
             }} 
@@ -173,7 +181,7 @@ export default function RootLayout() {
               headerShown: false,
             }} 
           />
-        </Stack>
+        </Stack>)}{/* End isReady conditional */}
       </DatabaseProvider>
     </SQLiteProvider>
   );
