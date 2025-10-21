@@ -80,7 +80,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
         
   const openOptionsModal = async (product: ProductType) => {
     // Check to see if options exist for this product
-    if (await optionsExists(product.id) || !(product.hasOptions === false && optionsExists(product.id))) {
+    if (await optionsExists(product.id) || !(product.hasOptions === 0 && optionsExists(product.id))) {
       setCurrProduct(product);
       setCurrProducts(prev => [...prev, product]);
       setProductIds(prev => [...prev, product.id]);

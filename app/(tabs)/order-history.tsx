@@ -44,22 +44,22 @@ export default function OrderHistoryScreen() {
         }, [selectedDatabase, pageNumber])
     );
     
-    // Guard: redirect if no database selected
-    useEffect(() => {
-        if (!selectedDatabase) {
-            console.log('No database selected, redirecting...');
-            router.replace('/');
-        }
-    }, [selectedDatabase]);
+    // // Guard: redirect if no database selected
+    // useEffect(() => {
+    //     if (!selectedDatabase) {
+    //         console.log('No database selected, redirecting...');
+    //         router.replace('../database-list');
+    //     }
+    // }, [selectedDatabase]);
 
 
-    if (!selectedDatabase) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.text}>Loading...</Text>
-            </View>
-        );
-    }
+    // if (!selectedDatabase) {
+    //     return (
+    //         <View style={styles.container}>
+    //             <Text style={styles.text}>Loading...</Text>
+    //         </View>
+    //     );
+    // }
 
     console.log('Order History - Selected Database:', selectedDatabase);
 

@@ -31,22 +31,22 @@ export default function Index() {
     const [editMode, setEditMode] = useState(false);
     const { selectedDatabase, clearSelectedDatabase } = useDatabaseContext();
     
-    // Guard: redirect if no database selected
-    useEffect(() => {
-        if (!selectedDatabase) {
-            console.log('No database selected, redirecting...');
-            router.replace('/');
-        }
-    }, [selectedDatabase]);
+    // // Guard: redirect if no database selected
+    // useEffect(() => {
+    //     if (!selectedDatabase) {
+    //         console.log('No database selected, redirecting...');
+    //         router.replace('../database-list');
+    //     }
+    // }, [selectedDatabase]);
 
 
-    if (!selectedDatabase) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.title}>Loading...</Text>
-            </View>
-        );
-    }
+    // if (!selectedDatabase) {
+    //     return (
+    //         <View style={styles.container}>
+    //             <Text style={styles.title}>Loading...</Text>
+    //         </View>
+    //     );
+    // }
 
   
 

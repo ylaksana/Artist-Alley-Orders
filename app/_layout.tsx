@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { View, Text } from "react-native";
 
 // Database Context defined right here in the layout file
 interface DatabaseInfo {
@@ -56,6 +57,7 @@ function DatabaseProvider({ children }: { children: ReactNode }) {
 let dbInitialized = false;
 
 export default function RootLayout() {
+  const [dbError, setDbError] = React.useState<string | null>(null);
   const createDBIfNeeded = async (db:SQLiteDatabase) => {
     // This function can be used to initialize the database if needed
     if (dbInitialized) {
@@ -125,13 +127,24 @@ export default function RootLayout() {
       );
       console.log("Extra options table created successfully.");
       }
-      catch (error) { 
+      catch (error) {
         console.error("Error creating tables:", error);
+        setDbError(error instanceof Error ? error.message : String(error));
         dbInitialized = false;
         throw error;
       }
-    
   };
+  
+  if (dbError) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#25292e', padding: 20 }}>
+        <Text style={{ color: '#fff', fontSize: 16, textAlign: 'center' }}>
+          Database Error: {dbError}
+        </Text>
+      </View>
+    );
+  }
+
 
   return (
     <SQLiteProvider databaseName="peitrisha-sales.db" onInit={createDBIfNeeded}>
@@ -145,9 +158,10 @@ export default function RootLayout() {
             headerTintColor: '#fff',
             headerShadowVisible: false,
           }}
+          initialRouteName="database-list"
         >
           <Stack.Screen 
-            name="index" 
+            name="database-list" 
             options={{ 
               headerShown: true,
             }} 
