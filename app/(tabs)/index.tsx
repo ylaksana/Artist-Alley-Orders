@@ -323,15 +323,25 @@ export default function Index() {
 
 
           {/* Bottom Header with Submit and Clear buttons */}
-          {sum > 0 && (
+          {(sum > 0 || sale === "Preorder Sale") && (
             <View style={styles.bottomHeader}>
-              <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+              
+              
+              {// Submit Button ( only show if sum > 0 )
+                sum > 0 && 
+                  (<Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />)
+              }
+              
               <Pressable
                 style={styles.button} 
                 onPress={() => {
                   setSum(0);
                   setSelectedProducts([]);
                   clearCustomerInformation();
+                  setSale("Convention Sale");
+                  setName("N/A");
+                  setPhone("N/A");
+                  setAddress("N/A");
                 }
               }>
                 <Text style={styles.buttonText}>Clear</Text>

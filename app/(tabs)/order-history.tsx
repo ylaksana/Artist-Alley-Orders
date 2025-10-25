@@ -142,8 +142,8 @@ export default function OrderHistoryScreen() {
 
     const deleteOrder = async (id: number) => {
         try{
-            await database.runAsync(`DELETE FROM orders WHERE id = ?`, [id]);
             await database.runAsync(`DELETE FROM sold_products WHERE user_id = ?`, [id]);
+            await database.runAsync(`DELETE FROM orders WHERE id = ?`, [id]);
             loadData(pageNumber);
         }
         catch (error) {

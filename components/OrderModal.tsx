@@ -19,15 +19,22 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
             visible={isVisible}>
             <View style={styles.orderModalView}>
             <View style={styles.orderModalCard}>
+              {order?.type === "Convention Sale" ? (
               <Text style={styles.orderModalText}>
-                  
+                  {`Order Type: ${order?.type}\n`}
+                  {`Price: $${order?.price}`} 
+              </Text>
+              ) : (
+
+              <Text style={styles.orderModalText}>
                   {`Name: ${order?.name}\n`}
                   {`Email: ${order?.email}\n`}
                   {`Phone: ${order?.phone}\n`}
                   {`Order Type: ${order?.type}\n`}
                   {`Price: $${order?.price}`} 
-                  
               </Text>
+
+              )}
 
               <ScrollView style={styles.orderListContainer}>
                   {order?.list.map((item, index) => (

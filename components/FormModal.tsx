@@ -31,21 +31,26 @@ export default function OrderForm({isVisible, onClose, onSuccess} : Props) {
                 <TextInput style={[styles.textBox, {marginTop:20}]} placeholder="Enter your name" value={name} placeholderTextColor="#888" onChangeText={setName}/>
                 <TextInput style={styles.textBox} placeholder="Enter your address" value={address} placeholderTextColor="#888" onChangeText={setAddress} />
                 <TextInput style={[styles.textBox, {marginBottom:40}]} placeholder="Enter your phone number" value={phone} placeholderTextColor="#888" keyboardType="phone-pad" onChangeText={setPhone} />
-                <Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />
+                <Button label="Submit" theme="primary" onPress={() => {
+                    setWarningModalVisible(true)
+                    }} />
                 <Button label="Cancel" theme="primary" onPress={() => {
                     setName("");
                     setPhone("");
                     setAddress("");
                     onClose();
                 }} />
-`
+
             <WarningModal
                 isVisible={warningModalVisible}
                 onClose={() => setWarningModalVisible(false)}
                 onSuccess={() => {
                     console.log("Form submitted with name:", name, "phone:", phone, "address:", address);
                     setWarningModalVisible(false);
-                    onSuccess(name, phone, address, "Customer Sale");
+                    onSuccess(name, phone, address, "Preorder Sale");
+                    setName("");
+                    setPhone("");
+                    setAddress("");
                 }}
                 />
 
