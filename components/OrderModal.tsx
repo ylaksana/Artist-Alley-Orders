@@ -22,7 +22,8 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
               {order?.type === "Convention Sale" ? (
               <Text style={styles.orderModalText}>
                   {`Order Type: ${order?.type}\n`}
-                  {`Price: $${order?.price}`} 
+                  {`Price: $${order?.price}\n`}
+                  {`Payment Type: ${order?.paymentType}\n`}
               </Text>
               ) : (
 
@@ -31,7 +32,8 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
                   {`Email: ${order?.email}\n`}
                   {`Phone: ${order?.phone}\n`}
                   {`Order Type: ${order?.type}\n`}
-                  {`Price: $${order?.price}`} 
+                  {`Price: $${order?.price}\n`}
+                  {`Payment Type: ${order?.paymentType}\n`}
               </Text>
 
               )}

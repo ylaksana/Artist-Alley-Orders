@@ -157,10 +157,13 @@ export default function Index() {
       }
 
       const clearCustomerInformation = () => {
+        setSum(0);
+        setSelectedProducts([]);
         setName("N/A");
         setPhone("N/A");
         setAddress("N/A");
         setSale("Convention Sale");
+        setPaymentType("Card");
       } 
 
       const storeCustomerInformation = async() =>{
@@ -204,10 +207,8 @@ export default function Index() {
             }
           }
           
-          setSum(0);
-          setSelectedProducts([]);
           clearCustomerInformation();
-          setPaymentType("Card");
+          
         } catch (error) {
           const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
           alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
@@ -275,13 +276,9 @@ export default function Index() {
 
             {/* Total Sum */}
              {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
-            
-
 
             {/* Buttons */}
             <View style={styles.buttonContainer}>
-              
-              
               {/* Button to add products */}
                <View style={styles.button}>
                 <Pressable
@@ -307,6 +304,28 @@ export default function Index() {
 
             </View>
           </View>
+
+          {/* Bottom Header with Submit and Clear buttons */}
+          {(sum > 0 || sale === "Preorder Sale") && (
+            <View style={styles.bottomHeader}>
+              
+              
+              {// Submit Button ( only show if sum > 0 )
+                sum > 0 && 
+                  (<Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />)
+              }
+              
+              <Pressable
+                style={styles.button} 
+                onPress={() => {
+                  
+                  clearCustomerInformation();
+                }
+              }>
+                <Text style={styles.buttonText}>Clear</Text>
+              </Pressable>
+            </View>
+            )}
            
             {/*  Modals  */}
           <SelectProductModal
@@ -345,33 +364,7 @@ export default function Index() {
             />
 
 
-          {/* Bottom Header with Submit and Clear buttons */}
-          {(sum > 0 || sale === "Preorder Sale") && (
-            <View style={styles.bottomHeader}>
-              
-              
-              {// Submit Button ( only show if sum > 0 )
-                sum > 0 && 
-                  (<Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />)
-              }
-              
-              <Pressable
-                style={styles.button} 
-                onPress={() => {
-                  setSum(0);
-                  setSelectedProducts([]);
-                  clearCustomerInformation();
-                  setSale("Convention Sale");
-                  setName("N/A");
-                  setPhone("N/A");
-                  setAddress("N/A");
-                  setPaymentType("Card");
-                }
-              }>
-                <Text style={styles.buttonText}>Clear</Text>
-              </Pressable>
-            </View>
-            )}
+          
             
         </View>
     )

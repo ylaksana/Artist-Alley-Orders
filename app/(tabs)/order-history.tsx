@@ -17,6 +17,7 @@ export type OrderType ={
     phone: string;
     list: ProductItem[];
     price: string;
+    paymentType: string;
 }
 
 export type ProductItem = {
