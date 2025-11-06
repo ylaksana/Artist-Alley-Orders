@@ -88,6 +88,7 @@ export default function RootLayout() {
             email TEXT,
             price TEXT,
             phone REAL,
+            paymentType TEXT,
             db_id INTEGER,
             FOREIGN KEY (db_id) REFERENCES databases(id) 
           );`

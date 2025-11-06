@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, ScrollView, Pressable} from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import { Stack, router} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState, useEffect, } from "react";
+import { useState } from "react";
 import { ProductType} from "@/types";
 
 import SelectProductModal from "@/components/SelectProductModal";
@@ -25,6 +25,7 @@ export default function Index() {
     const [phone, setPhone] = useState("N/A");
     const [address, setAddress] = useState("N/A");
     const [sale, setSale] = useState("Convention Sale");
+    const [paymentType, setPaymentType] = useState("Card");
     const [SelectProductModalVisible, setSelectProductModalVisible] = useState(false);
     const [selectedProducts, setSelectedProducts] = useState<ProductType[]>([]);
     const [sum, setSum] = useState<number>(0);
@@ -48,7 +49,20 @@ export default function Index() {
     //     );
     // }
 
-  
+    // useEffect(() => {
+    //   const updateOrdersTable = async () => {
+    //     try {
+    //       await database.runAsync(
+    //         `ALTER TABLE orders ADD COLUMN paymentType TEXT;`
+    //       )
+    //       console.log("Column paymentType added to orders table successfully.");
+    //     } catch (error) {
+    //       console.error("Error updating orders table:", error);
+    //     }
+    //   };
+
+    //   updateOrdersTable();
+    // }, [database]);
 
     // functions
     const headerLeft = () => {
@@ -156,14 +170,15 @@ export default function Index() {
         }
         try{
           const result = await database.runAsync(
-            "INSERT INTO orders (type, name, email, price, phone, db_id) VALUES(?, ?, ?, ?, ?, ?)",
+            "INSERT INTO orders (type, name, email, price, phone, db_id, paymentType) VALUES(?, ?, ?, ?, ?, ?, ?)",
             [
               sale,
               name,
               address,
               sum,
               phone,
-              selectedDatabase.id
+              selectedDatabase.id,
+              paymentType 
             ]
           );
     
@@ -192,6 +207,7 @@ export default function Index() {
           setSum(0);
           setSelectedProducts([]);
           clearCustomerInformation();
+          setPaymentType("Card");
         } catch (error) {
           const tableInfo = await database.getAllAsync(`PRAGMA table_info(orders);`);
           alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
@@ -247,7 +263,15 @@ export default function Index() {
                 </View>
             </ScrollView>)}
 
-
+            {/* Payment Type Selection */}
+            {sum > 0 && (<View style={styles.paymentTypeContainer}>
+              <Pressable style = {paymentType === "Card" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Card")}>
+                <Text style={styles.paymentTypeButtonText}>Card</Text>
+              </Pressable>
+              <Pressable style = {paymentType === "Cash" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Cash")}>
+                <Text style={styles.paymentTypeButtonText}>Cash</Text>
+              </Pressable>
+            </View>)}
 
             {/* Total Sum */}
              {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
@@ -270,14 +294,13 @@ export default function Index() {
 
 
               {/* Button to switch convention */}
-              <View style={styles.button}>
+              <View>
                 <Pressable
-                    style={styles.buttonText}
                     onPress={() => {
                       switchConvention();
                     }}
                     >
-                    <Text>Switch Convention</Text>
+                    <Text style={styles.switchConventionButton}>Switch Convention</Text>
                 </Pressable>
               </View>
 
@@ -342,6 +365,7 @@ export default function Index() {
                   setName("N/A");
                   setPhone("N/A");
                   setAddress("N/A");
+                  setPaymentType("Card");
                 }
               }>
                 <Text style={styles.buttonText}>Clear</Text>
@@ -449,5 +473,35 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-    }
+    },
+    paymentTypeContainer:{
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    switchConventionButton:{
+      color: 'rgba(252, 251, 251, 1)',
+      fontSize: 16,
+      fontWeight: 'bold', 
+      textDecorationLine: 'underline',
+      padding: 10,
+      borderRadius: 5,
+    },
+    paymentTypeButton:{
+      paddingVertical: 4,
+      paddingHorizontal: 4,
+      borderRadius: 10,
+      marginHorizontal: 5,
+      backgroundColor: 'rgba(255, 255, 255, 0.09)',
+    },
+    paymentTypeButtonText:{
+      color: '#000',
+      fontSize: 16,
+      fontWeight: 'bold',
+      borderColor: '#25292e',
+      borderWidth: 3,
+      borderRadius: 10,
+      paddingHorizontal: 20,
+      paddingVertical: 7,
+      backgroundColor: 'rgba(255, 255, 255, 0.09)',
+    } 
 });
