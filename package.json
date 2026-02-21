@@ -46,5 +46,8 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0"
   },
+  "overrides": {
+    "tar": "^7.5.8"
+  },
   "private": true
 }

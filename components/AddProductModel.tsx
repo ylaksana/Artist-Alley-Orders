@@ -186,16 +186,20 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     // Delete product and its associated options from database
     const deleteProduct = async () => {
       if(!productId) return;
+      // we need to delete the product from users table and also delete all associated options from extra_options table
       try{
         console.log("Deleting product with ID:", productId);
-        await database.runAsync(
-          `DELETE FROM users WHERE id = ?`,
-          [productId]
-        );
-        await database.runAsync(
-          `DELETE FROM extra_options WHERE id = ?`,
-          [productId]
-        );
+        await database.withTransactionAsync(async () => {
+          await database.runAsync(
+            `DELETE FROM extra_options WHERE user_id = ?`,
+            [productId]
+          );
+
+          await database.runAsync(
+            `DELETE FROM users WHERE id = ?`,
+            [productId]
+          );
+        });
         onSuccess();
         onClose();
         alert("Product Deleted!");
@@ -242,7 +246,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             return;
           }
 
-          // If editing an existing product, manage newOptions and deletedOptions lists
+          // If editing an existing product, manage newOptions and deletedOptions
 
           // If option was in previousOptions and also in deletedOptions, it means user is re-adding a previously deleted option
           if(optionInPreviousList(optionText) && optionInDeletedList(optionText)){
