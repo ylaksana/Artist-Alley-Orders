@@ -348,7 +348,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   {/* Update/Add Button */}
                   <Pressable
                     style={styles.productModalButton}
-                    onPress={async () => {editMode ?  updateProduct() : submitFlag = true}}>
+                    onPress={async () => {editMode ?  updateProduct() : createProduct()}}>
                     <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
                   </Pressable>
 
