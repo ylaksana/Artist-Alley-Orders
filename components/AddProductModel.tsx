@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { useFocusEffect } from 'expo-router';
 
-
+// Modal component for adding/editing products, including managing extra options
 type Props = PropsWithChildren<{
     isVisible: boolean;
     onClose: () => void;
@@ -13,7 +13,10 @@ type Props = PropsWithChildren<{
     database: SQLiteDatabase;
   }>;
   
-
+// This component serves as a modal for both adding new products and editing existing ones. 
+// It manages product details like name and price, as well as extra options that can be associated with a product.
+// The component handles the logic for creating, updating, and deleting products and their options in the SQLite database. 
+// It also provides a user interface for inputting product information and managing extra options.
 export default function AddProductModal({isVisible, onSuccess, onClose, productId, database} : Props) {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
@@ -26,8 +29,14 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [deletedOptions, setDeletedOptions] = useState<string[]>([]);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
-    
+    // Recent Changes
+    // Flag to indicate whether to submit new product
+    let submitFlag = false;
+    // Product category types for selection
+    const categoryTypes = ["Vocaloid Keychain", "Sticker", "Regular Pin", "Small Pin", "Sanrio/Chiikawa Pins", "Shirt", "Other"];
 
+    
+// Load product data and options when modal becomes visible or when productId changes
     useEffect(() => {
         if(!isVisible) {
             setName("");
@@ -47,7 +56,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         }
     }, [isVisible, productId]);
 
-
+// Function to load product details and options from the database for editing
     const loadData = async () =>{
         if(!productId) return;
       try{
@@ -88,16 +97,22 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     // Update product details in the database for existing product
     const updateProduct = async () => {
+      // make sure that productId is available before trying to update
         if(!productId) return;
 
+        // Determine if there are any options remaining after considering new additions and deletions
         const hasOptions = (previousOptions.length + newOptions.length) - deletedOptions.length > 0;
 
+
+        // debug log for checking if options remain after update
         if (hasOptions) {
           console.log("Options remain.");
         } else {
           console.log("No options remain.");
         }
         
+        // we update product information in users table, including options
+        // if there are options remaining, we set hasOptions to 1, otherwise set it to 0
         try {
             await database.runAsync(
                 `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
@@ -118,12 +133,16 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                 );
             }
 
-
+            // message to alert user that product was updated and reset option management states
             alert("Product updated!");
+            // reset option management states
+
+            //make sure to reset optionsData to reflect the current state of options after update
             setDeletedOptions([]);
+            // After updating the database, we need to refresh optionsData to reflect the current state of options
             setNewOptions([]);
+            // close out
             onSuccess();
-            onClose();
         }catch (error) {
             console.error("Error updating product:", error);
         }
@@ -329,7 +348,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   {/* Update/Add Button */}
                   <Pressable
                     style={styles.productModalButton}
-                    onPress={async () => {editMode ?  updateProduct() : createProduct()}}>
+                    onPress={async () => {editMode ?  updateProduct() : submitFlag = true}}>
                     <Text style={{color: '#000'}}>{editMode ? "Update" : "Add"}</Text>
                   </Pressable>
 
@@ -419,6 +438,27 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   
                 </View>
               )}
+
+              {/*NEW VIEW FOR SELECTING THE PRODUCT TYPE UPON CREATION*/}
+              {/*MUST ADD A PRODUCT FOR THE FIRST TIME*/}
+
+              {/* Select item category */}
+              {submitFlag && !productId && 
+                (<View>
+                    <Text>What kind of product is this?</Text>
+                    {/* Buttons for selecting product type */}
+                    <ScrollView style={styles.scrollView}>
+                      {categoryTypes.map((category, index) => (
+                        <Pressable
+                          key={index}
+                          style={styles.productModalButton}
+                        >
+                          <Text style={{color: '#000'}}>{category}</Text>
+                        </Pressable>
+                      ))}
+                      
+                    </ScrollView>
+                </View>)}
             
             </View>
 
@@ -501,5 +541,10 @@ const styles = StyleSheet.create({
         margin: 10,
         width: '100%',
         maxHeight: 200,
+      },
+      scrollView: {
+        backgroundColor: '#25292e',
+        width: '100%',
+        flex:1,
       },
 });
