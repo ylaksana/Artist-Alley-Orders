@@ -6,11 +6,15 @@ import { OrderType } from '@/app/(tabs)/order-history';
 type Props = PropsWithChildren<{
   isVisible: boolean;
   order: OrderType | null;
+  cash? : string;
+  card? : string;
   onClose: () => void;
   onDelete: () => void;
 }>;
 
-export default function OrderModal({isVisible, order, onClose, onDelete} : Props) { 
+export default function OrderModal({isVisible, order, cash, card, onClose, onDelete} : Props) { 
+
+
     
     return (
         <Modal
@@ -22,7 +26,11 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
               {order?.type === "Convention Sale" ? (
               <Text style={styles.orderModalText}>
                   {`Order Type: ${order?.type}\n`}
-                  {`Price: $${order?.price}\n`}
+                  {order?.paymentType === "Custom" ? 
+                      `Card: $${card}\n Cash: $${cash}\n`
+                    :
+                      `Price: $${order?.price}\n`
+                  }
                   {`Payment Type: ${order?.paymentType}\n`}
               </Text>
               ) : (
@@ -32,7 +40,11 @@ export default function OrderModal({isVisible, order, onClose, onDelete} : Props
                   {`Email: ${order?.email}\n`}
                   {`Phone: ${order?.phone}\n`}
                   {`Order Type: ${order?.type}\n`}
-                  {`Price: $${order?.price}\n`}
+                  {order?.paymentType === "Custom" ? 
+                      `Card: $${card}\n Cash: $${cash}\n`
+                    :
+                      `Price: $${order?.price}\n`
+                  }
                   {`Payment Type: ${order?.paymentType}\n`}
               </Text>
 

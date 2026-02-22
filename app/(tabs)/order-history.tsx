@@ -8,6 +8,11 @@ import OrderModal from '@/components/OrderModal';
 import { useDatabaseContext } from '../_layout';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                           //
+//                                  THIS IS THE LEDGER WHERE THE USER CAN VIEW PAST SALES                                    //
+//                                                                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export type OrderType ={
     id: number;
@@ -34,6 +39,8 @@ export default function OrderHistoryScreen() {
     const [data, setData] = useState<OrderType[]>([]);
     const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
     const [pageNumber, setPageNumber] = useState<number>(1);
+    const [cash, setCash] = useState<string>("0");
+    const [card, setCard] = useState<string>("0");
     
 
     useFocusEffect(
@@ -44,71 +51,9 @@ export default function OrderHistoryScreen() {
             }
         }, [selectedDatabase, pageNumber])
     );
-    
-    // // Guard: redirect if no database selected
-    // useEffect(() => {
-    //     if (!selectedDatabase) {
-    //         console.log('No database selected, redirecting...');
-    //         router.replace('../database-list');
-    //     }
-    // }, [selectedDatabase]);
 
-
-    // if (!selectedDatabase) {
-    //     return (
-    //         <View style={styles.container}>
-    //             <Text style={styles.text}>Loading...</Text>
-    //         </View>
-    //     );
-    // }
 
     console.log('Order History - Selected Database:', selectedDatabase);
-
-    
-    
-    // const updateSoldProductsTable = async () => {
-    //     try {
-    //         if (!selectedDatabase) {    
-    //             console.warn('No database selected in Order History');
-    //             setData([]);
-    //             return; // Exit early
-    //         }
-    //         await database.runAsync(
-    //             `ALTER TABLE sold_products
-    //             ADD COLUMN db_id`
-    //         );
-    //         console.log("Successfully added column db_id to sold_products table.");
-    //         await database.runAsync(
-    //             `UPDATE sold_products
-    //             SET db_id = ?`,
-    //             [selectedDatabase?.id]
-    //         );
-    //     } catch (error) {
-    //         console.error("Error adding db_id to sold_products table:", error);
-    //     }
-    // }
-
-    // const updateOrderTable = async () => {
-    //     try {
-    //          if (!selectedDatabase) {    
-    //             console.warn('No database selected in Order History');
-    //             setData([]);
-    //             return; // Exit early
-    //         }
-    //                 await database.runAsync(
-    //             `ALTER TABLE sold_products
-    //             ADD COLUMN db_id`
-    //         );
-    //         console.log("Successfully added column db_id to orders table.");
-    //         await database.runAsync(
-    //             `UPDATE sold_products
-    //             SET db_id = ?`,
-    //             [selectedDatabase?.id]
-    //         );
-    //     } catch (error) {
-    //         console.error("Error adding phone to table:", error);
-    //     }
-    // }
 
     const loadData = async (page: number) => {
         if (!selectedDatabase) {
@@ -168,7 +113,15 @@ export default function OrderHistoryScreen() {
             const result = await database.getAllAsync<ProductItem>(`SELECT * FROM sold_products WHERE user_id = ?`, [order.id]);
             // console.log("Order products:", result);
             order.list = result;
+            // set order for the modal
             setSelectedOrder(order);
+
+            // check if custom payment, if so, split the price into card and cash and store them in state to pass to the modal
+            if (order.paymentType === "Custom") {
+                setCard(order.price.split(" ")[0]);
+                setCash(order.price.split(" ")[1]);
+            }
+
             setOrderModalVisible(true);
         }
         catch (error) {
@@ -182,7 +135,6 @@ export default function OrderHistoryScreen() {
     
 
     useEffect(() => {
-        // updateOrderTable();
         logDatabaseID();
     }, []);
 
@@ -195,7 +147,16 @@ export default function OrderHistoryScreen() {
                 {data.map((order) =>(
                     <View key={order.id} style={styles.cell}>
                         <Pressable onPress={() => openOrder(order)}>
-                            <Text style={styles.text}>Type: {order.type}, Price: ${order.price}</Text>
+                            <Text style={styles.text}>
+                                Type: {order.type}, 
+                                Price: $ 
+                                {/* If customer payment, split the price into card and cash and display them separately, otherwise just display the price */}
+                                {order.paymentType === "Custom" ? 
+                                    parseFloat(order.price.split(" ")[0]) + parseFloat(order.price.split(" ")[1]) 
+                                    :
+                                    order.price
+                                }
+                                </Text>
                         </Pressable>
                     </View>
                 
@@ -205,6 +166,8 @@ export default function OrderHistoryScreen() {
                 <OrderModal
                     isVisible={orderModalVisible}
                     order={selectedOrder}
+                    cash={cash}
+                    card={card}
                     onClose={() => setOrderModalVisible(false)}
                     onDelete={() => {
                         deleteOrder(selectedOrder.id);

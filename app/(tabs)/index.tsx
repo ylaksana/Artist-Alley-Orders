@@ -141,12 +141,24 @@ export default function Index() {
       } 
       
       // this function loads the options for the selected product from the database when the options modal is opened
-      const storeCustomerInformation = async() =>{
+      const storeCustomerInformation = async(cardAmount: string, cashAmount: string) =>{
         // make sure the selected database exists
         if (selectedDatabase == null) {
           console.warn('No database selected');
           return;
         }
+
+
+        // make new variable to store sum
+        // if card or cash, store sum, if not, store sum as a combinnation of card and cash with a space to split them later
+        let sumToInsert: string | number;
+        if(paymentType === "Custom"){
+          sumToInsert = `${cardAmount} ${cashAmount}`;
+        }
+        else{
+          sumToInsert = sum;
+        }
+
 
         // store the sales information in the ledger
         try{
@@ -157,7 +169,7 @@ export default function Index() {
               sale,
               name,
               address,
-              sum,
+              sumToInsert,
               phone,
               selectedDatabase.id,
               paymentType 
@@ -195,17 +207,6 @@ export default function Index() {
           alert(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
           console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
         } 
-      }
-
-      // just calls the storeCustomerInformation function and shows an alert based on whether it was successful or not
-      const storeOrder = () => {
-        try{
-          storeCustomerInformation();
-          alert("Order saved successfully!");
-        }
-        catch (error) {
-          alert(`Error saving order: ${error}`);
-        }
       }
       
       // button to switch conventions
@@ -248,14 +249,24 @@ export default function Index() {
             </ScrollView>)}
 
             {/* Payment Type Selection */}
-            {sum > 0 && (<View style={styles.paymentTypeContainer}>
-              <Pressable style = {paymentType === "Card" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Card")}>
-                <Text style={styles.paymentTypeButtonText}>Card</Text>
-              </Pressable>
-              <Pressable style = {paymentType === "Cash" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Cash")}>
-                <Text style={styles.paymentTypeButtonText}>Cash</Text>
-              </Pressable>
-            </View>)}
+            {sum > 0 && 
+            (
+            <View>
+              <View style={styles.paymentTypeContainer}>
+                <Pressable style = {paymentType === "Card" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Card")}>
+                  <Text style={styles.paymentTypeButtonText}>Card</Text>
+                </Pressable>
+                <Pressable style = {paymentType === "Cash" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Cash")}>
+                  <Text style={styles.paymentTypeButtonText}>Cash</Text>
+                </Pressable>
+              </View>
+              <View style={styles.paymentTypeContainer}>
+                <Pressable style = {paymentType === "Custom" ? [styles.paymentTypeButton,{backgroundColor: 'rgba(255, 255, 255, 0.3)'}] : [styles.paymentTypeButton]} onPress ={() => setPaymentType("Custom")}>
+                <Text style={styles.paymentTypeButtonText}>Custom</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
 
             {/* Total Sum */}
              {sum > 0 && (<Text style={styles.sumCounter}>Total: ${sum}</Text>)}
@@ -295,7 +306,13 @@ export default function Index() {
               
               {// Submit Button ( only show if sum > 0 )
                 sum > 0 && 
-                  (<Button label="Submit" theme="primary" onPress={() => setWarningModalVisible(true)} />)
+                  (<Button 
+                    label="Submit" 
+                    theme="primary" 
+                    onPress={() => {
+                      setWarningModalVisible(true)
+                    }
+                  } />)
               }
               
               <Pressable
@@ -328,10 +345,12 @@ export default function Index() {
               }}/>
 
           <WarningModal
+              customPayment={paymentType === "Custom"}
+              sum = {paymentType === "Custom" ? sum : undefined}
               isVisible={warningModalVisible}
               onClose={() => setWarningModalVisible(false)}
-              onSuccess={() => {
-                storeOrder()
+              onSuccess={(cardAmount: string, cashAmount: string) => {
+                storeCustomerInformation(cashAmount, cardAmount);
                 setWarningModalVisible(false);
               }}
           />
