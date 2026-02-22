@@ -150,31 +150,47 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     // Create Product and insert into database
     const createProduct = async () =>{
+      // we add the new product to users table
+      // if there are options added, we also add those to the extra_options table and link them with the new product's ID
+      // if we fail to add a product, we rollback any changes to avoid having options without a product and vice versa
         try{
-          // Insert new product into users table
-          const result = await database.runAsync(
-            "INSERT INTO users (name, email, count, hasOptions) VALUES(?, ?, ?, ?)",
-            [
-              name,
-              price,
-              0,
-              newOptions.length > 0 ? 1 : 0,
-            ]
-          );
-          const newID = result.lastInsertRowId;
-          console.log("New product ID:", newID);
-          // Insert each option into extra_options table with the new product's ID
-          for (const option of optionsData) {
-            database.runAsync(
-              "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
-              [newID, option]
+          // atomic transaction
+          await database.withTransactionAsync(async () => {
+            // Insert new product into users table
+            const result = await database.runAsync(
+              "INSERT INTO users (name, email, count, hasOptions) VALUES(?, ?, ?, ?)",
+              [
+                name,
+                price,
+                0,
+                optionsData.length > 0 ? 1 : 0,
+              ]
             );
-          }
+
+            // get the ID of the newly inserted product to link options
+            const newID = result.lastInsertRowId;
+            console.log("New product ID:", newID);
+
+            // Insert associated options into extra_options table
+            for (const option of optionsData) {
+              await database.runAsync(
+                "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+                [newID, option]
+              );
+            }
+          });
+
+          // Alert user that product was added and reset states
           alert("Added new product!");
+          // reset states
           setName("");
           setPrice("");
           setOptionsData([]);
-          onClose();
+          setOptionText("");
+          setSelectedOptions([]);
+          setNewOptions([]);
+          setDeletedOptions([]);
+          // close out of modal
           onSuccess();
         } catch (error) {
           console.error("Error adding product:", error);
@@ -189,19 +205,24 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
       // we need to delete the product from users table and also delete all associated options from extra_options table
       try{
         console.log("Deleting product with ID:", productId);
+        // we run transactions to ensure that both deletions happen together
+        // the same thing with creating products, if the process fails, we can just rollback changes and not have partial deletions
         await database.withTransactionAsync(async () => {
           await database.runAsync(
+            // delete options first, otherwise the app won't be able to find the productId foreign key in extra_options and throw an error
             `DELETE FROM extra_options WHERE user_id = ?`,
             [productId]
           );
 
+          // then delete the product
           await database.runAsync(
             `DELETE FROM users WHERE id = ?`,
             [productId]
           );
         });
+
+        // close out of modal and alert user that product was deleted
         onSuccess();
-        onClose();
         alert("Product Deleted!");
       }
       catch (error) {
