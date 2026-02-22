@@ -1,8 +1,7 @@
 import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'react-native';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useRef } from 'react';
 import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
-import { useFocusEffect } from 'expo-router';
 
 // Modal component for adding/editing products, including managing extra options
 type Props = PropsWithChildren<{
@@ -25,10 +24,10 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [optionsData, setOptionsData] = useState<string[]>([]);
     const [optionText, setOptionText] = useState("");
     const [extraOptionsVisible, setExtraOptionsVisible] = useState(false);
-    const [previousOptions, setPreviousOptions] = useState<string[]>([]);
-    const [newOptions, setNewOptions] = useState<string[]>([]);
-    const [deletedOptions, setDeletedOptions] = useState<string[]>([]);
+    // const [previousOptions, setPreviousOptions] = useState<string[]>([]);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+    const previousOptions = useRef<Set<string>>(new Set()); // Backup of original options fetched from database to manage option updates and cancellations
+    const changesExists = optionsData.length !== previousOptions.current.size || optionsData.some(option => !previousOptions.current.has(option));
 
     // Recent Changes
     // Flag to indicate whether to submit new product
@@ -43,13 +42,13 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             setName("");
             setPrice("");
             setEditMode(false);
-            setPreviousOptions([]);
+            previousOptions.current.clear();
             setOptionsData([]);
             console.log("optionsData", optionsData);
             return;
         }
 
-        if (productId) {
+        if (productId != null) {
             setEditMode(true);
             loadProductData();
         }else{
@@ -59,7 +58,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
 // Function to load product details and options from the database for editing
     const loadProductData = async () =>{
-        if(!productId) return;
+        if(productId == null) return;
       try{
         //fetch product data
         const result = await database.getFirstAsync<{
@@ -86,7 +85,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
         // Set optionsData and previousOptions to the fetched options
         setOptionsData(optionsList);
-        setPreviousOptions(optionsList); // Backup original options in case of cancel
+        previousOptions.current = new Set(optionsList); // Backup original options in case of cancel
         console.log(`Loaded options for addProductModal:`, optionsList);
 
       }
@@ -114,7 +113,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         alert("Please enter a valid name and price.");
         return;
       }
-      
+
       // then we check if there's an existing product with the same name to avoid duplicates
       if (productList.some(product => product.name === name)) {
         alert("A product with this name already exists.");
@@ -156,8 +155,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           setOptionsData([]);
           setOptionText("");
           setSelectedOptions([]);
-          setNewOptions([]);
-          setDeletedOptions([]);
           // close out of modal
           onSuccess();
         } catch (error) {
@@ -209,7 +206,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
         if(productId == null) return;
 
         // Determine if there are any options remaining after considering new additions and deletions
-        const hasOptions = (previousOptions.length + newOptions.length) - deletedOptions.length > 0;
+        const hasOptions = optionsData.length > 0;
 
 
         // debug log for checking if options remain after update
@@ -236,6 +233,13 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
           //    - newOptions for options added in this session
           //    - deletedOptions for options marked for deletion in this session
           
+          // optionsData set
+          const current = new Set(optionsData);
+          // options to add
+          const newOptions = optionsData.filter(x => !previousOptions.current.has(x));
+          // options to delete
+          const deletedOptions = [...previousOptions.current].filter(x => !current.has(x));
+          
           // Update existing options in the database
           for (const option of newOptions) {
               await database.runAsync(
@@ -257,12 +261,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
             // message to alert user that product was updated and reset option management states
             alert("Product updated!");
-            // reset option management states
-
-            //make sure to reset optionsData to reflect the current state of options after update
-            setDeletedOptions([]);
-            // After updating the database, we need to refresh optionsData to reflect the current state of options
-            setNewOptions([]);
+            // now previous becomes current for the next time we edit the same product
+            previousOptions.current = new Set(optionsData);
             // close out
             onSuccess();
         }catch (error) {
@@ -280,17 +280,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     // Check if option exists in previousOptions (original options from database)
     const optionInPreviousList = (option: string) => {
-      return previousOptions.includes(option);
-    }
-
-    // Check if option exists in deletedOptions (options marked for deletion)
-    const optionInDeletedList = (option: string) => {
-      return deletedOptions.includes(option);
-    }
-
-    // Check if option exists in newOptions (options added in current session)
-    const optionInNewList = (option: string) => {
-      return newOptions.includes(option);
+      return previousOptions.current.has(option);
     }
 
     
@@ -304,25 +294,8 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             return;
           }
 
-          // If editing an existing product, manage newOptions and deletedOptions
-
-          // If option was in previousOptions and also in deletedOptions, it means user is re-adding a previously deleted option
-          if(optionInPreviousList(optionText) && optionInDeletedList(optionText)){
-            setOptionsData([...optionsData, optionText]);
-          }
-          // If option is in newOptions, it means user is trying to add a duplicate new option
-          else if(optionInPreviousList(optionText) && !optionInDeletedList(optionText)){
-            alert("Option already exists!");
-            return;
-          }
-          // If option is not in previousOptions and not in newOptions, it's a completely new option
-          else{
-            setOptionsData([...optionsData, optionText]);
-            setNewOptions([...newOptions, optionText]);
-          }
-
-          // Clear the input box after adding
-          setOptionText("");
+          // add to optionsData to update the UI with the new option immediately
+          setOptionsData([...optionsData, optionText]);
 
           alert("Added new option!");
           console.log("optionsData after adding:", optionsData);
@@ -334,26 +307,19 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     // Delete selected options from optionsData
     const deleteOption = async () => {
+      // make sure that there are selected options to delete
       if(selectedOptions.length === 0) return;
 
+      // we need to manage the deletion of options based on whether they are newly added in this session or if they exist in the database
       let optionsCopy = [...optionsData];
 
       for (const option of selectedOptions) {
-        if (optionInNewList(option)) {
-          // If option is newly added in this session, just remove it from optionsData and newOptions
-          setNewOptions(newOptions.filter((item) => item !== option));
-        }
-        else{
-          // If option exists in previousOptions, it means it's stored in the database
-          deletedOptions.push(option); // Mark it for deletion from database
-        }
         optionsCopy = optionsCopy.filter((item) => item !== option); // Remove from current optionsData
       }
 
       setOptionsData(optionsCopy);
       setSelectedOptions([]); // Clear selected options after deletion
     }
-
 
     // For selecting options in the extra options list
     const handleOptionSelect = (option: string) => {
@@ -404,7 +370,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     onPress={() => {
                       setExtraOptionsVisible(true);
                     }}>
-                    <Text style={{color: '#000'}}>{productId ? "Edit Extra Options" : "Add Extra Options"}</Text>
+                    <Text style={{color: '#000'}}>{productId != null ? "Edit Extra Options" : "Add Extra Options"}</Text>
                   </Pressable>
 
                   {/* Update/Add Button */}
@@ -426,9 +392,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     style={styles.productModalButton}
                     onPress={() => {
                       setOptionsData([]);
-                      setPreviousOptions([]);
-                      setNewOptions([]);
-                      setDeletedOptions([]);
+                      previousOptions.current.clear();
                       setExtraOptionsVisible(false);
                       onClose();
                     }}>
@@ -476,13 +440,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
 
                 {/* Revert Button */}
-                {(newOptions.length > 0 || deletedOptions.length > 0) && (
+                {changesExists && (
                 <Pressable
                   style={styles.productModalButton}
                   onPress={async () => {
-                    setOptionsData(previousOptions);
-                    setDeletedOptions([]);
-                    setNewOptions([]);
+                    setOptionsData([...previousOptions.current]);
                     setSelectedOptions([]);
                   }}>
                   <Text style={{color: '#000'}}>Revert Changes</Text>
@@ -505,7 +467,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
               {/*MUST ADD A PRODUCT FOR THE FIRST TIME*/}
 
               {/* Select item category */}
-              {submitFlag && !productId && 
+              {submitFlag && productId == null && 
                 (<View>
                     <Text>What kind of product is this?</Text>
                     {/* Buttons for selecting product type */}
