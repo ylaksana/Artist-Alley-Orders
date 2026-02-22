@@ -235,6 +235,7 @@ export default function SelectProductModal({isVisible, editMode, onClose, onSucc
                 isVisible={addProductModalVisible}
                 productId={productId}
                 database={database}
+                productList={data}
                 onClose={() => {
                     setCurrProduct(defaultProduct);
                     setAddProductModalVisible(false);

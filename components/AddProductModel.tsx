@@ -11,13 +11,14 @@ type Props = PropsWithChildren<{
     onSuccess: () => void;
     productId?: number | null;
     database: SQLiteDatabase;
+    productList: {id: number, name: string}[];
   }>;
   
 // This component serves as a modal for both adding new products and editing existing ones. 
 // It manages product details like name and price, as well as extra options that can be associated with a product.
 // The component handles the logic for creating, updating, and deleting products and their options in the SQLite database. 
 // It also provides a user interface for inputting product information and managing extra options.
-export default function AddProductModal({isVisible, onSuccess, onClose, productId, database} : Props) {
+export default function AddProductModal({isVisible, onSuccess, onClose, productId, database, productList} : Props) {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [editMode, setEditMode] = useState(false);
@@ -50,14 +51,14 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
         if (productId) {
             setEditMode(true);
-            loadData();
+            loadProductData();
         }else{
             setEditMode(false);
         }
     }, [isVisible, productId]);
 
 // Function to load product details and options from the database for editing
-    const loadData = async () =>{
+    const loadProductData = async () =>{
         if(!productId) return;
       try{
         //fetch product data
@@ -95,64 +96,31 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     };
 
 
-    // Update product details in the database for existing product
-    const updateProduct = async () => {
-      // make sure that productId is available before trying to update
-        if(!productId) return;
-
-        // Determine if there are any options remaining after considering new additions and deletions
-        const hasOptions = (previousOptions.length + newOptions.length) - deletedOptions.length > 0;
 
 
-        // debug log for checking if options remain after update
-        if (hasOptions) {
-          console.log("Options remain.");
-        } else {
-          console.log("No options remain.");
-        }
-        
-        // we update product information in users table, including options
-        // if there are options remaining, we set hasOptions to 1, otherwise set it to 0
-        try {
-            await database.runAsync(
-                `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
-                [name, price, hasOptions ? 1 : 0, productId]
-            );
-            
-            // Update existing options in the database
-            for (const option of newOptions) {
-                await database.runAsync(
-                    "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
-                    [productId, option]
-                );
-            }
-            for (const option of deletedOptions) {
-                await database.runAsync(
-                    "DELETE FROM extra_options WHERE user_id = ? AND option = ?",
-                    [productId, option]
-                );
-            }
 
-            // message to alert user that product was updated and reset option management states
-            alert("Product updated!");
-            // reset option management states
 
-            //make sure to reset optionsData to reflect the current state of options after update
-            setDeletedOptions([]);
-            // After updating the database, we need to refresh optionsData to reflect the current state of options
-            setNewOptions([]);
-            // close out
-            onSuccess();
-        }catch (error) {
-            console.error("Error updating product:", error);
-        }
-    }
+    // MAIN FUNCTIONS FOR PRODUCT MANAGEMENT (CREATE, UPDATE, DELETE)//
 
     // Create Product and insert into database
     const createProduct = async () =>{
       // we add the new product to users table
       // if there are options added, we also add those to the extra_options table and link them with the new product's ID
       // if we fail to add a product, we rollback any changes to avoid having options without a product and vice versa
+        
+      
+      //first we check if the name and the price are valid, if not we alert the user and don't proceed with database operations
+      if (name == "" || price == "") {
+        alert("Please enter a valid name and price.");
+        return;
+      }
+      
+      // then we check if there's an existing product with the same name to avoid duplicates
+      if (productList.some(product => product.name === name)) {
+        alert("A product with this name already exists.");
+        return;
+      }
+
         try{
           // atomic transaction
           await database.withTransactionAsync(async () => {
@@ -201,15 +169,18 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
 
     // Delete product and its associated options from database
     const deleteProduct = async () => {
-      if(!productId) return;
+      if(productId == null) return;
       // we need to delete the product from users table and also delete all associated options from extra_options table
       try{
         console.log("Deleting product with ID:", productId);
         // we run transactions to ensure that both deletions happen together
         // the same thing with creating products, if the process fails, we can just rollback changes and not have partial deletions
+
+        // atomic transaction
         await database.withTransactionAsync(async () => {
+          
+          // delete options first, otherwise the app won't be able to find the productId foreign key in extra_options and throw an error
           await database.runAsync(
-            // delete options first, otherwise the app won't be able to find the productId foreign key in extra_options and throw an error
             `DELETE FROM extra_options WHERE user_id = ?`,
             [productId]
           );
@@ -220,6 +191,7 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
             [productId]
           );
         });
+        
 
         // close out of modal and alert user that product was deleted
         onSuccess();
@@ -231,7 +203,72 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     }
 
 
+  // Update product details in the database for existing product
+    const updateProduct = async () => {
+      // make sure that productId is available before trying to update
+        if(productId == null) return;
 
+        // Determine if there are any options remaining after considering new additions and deletions
+        const hasOptions = (previousOptions.length + newOptions.length) - deletedOptions.length > 0;
+
+
+        // debug log for checking if options remain after update
+        if (hasOptions) {
+          console.log("Options remain.");
+        } else {
+          console.log("No options remain.");
+        }
+        
+        // we update product information in users table, including options
+        // if there are options remaining, we set hasOptions to 1, otherwise set it to 0
+        try {
+          // atomic transaction to ensure no partial updates happen
+          await database.withTransactionAsync(async () => {
+
+            // Update product details in users table  
+            await database.runAsync(
+              `UPDATE users SET name = ?, email = ?, hasOptions = ? where id = ?`,
+              [name, price, hasOptions ? 1 : 0, productId]
+          );
+
+          // After updating the product, we need to know how to update its options in the options table
+          // we need two lists to keep track of the changes to options: 
+          //    - newOptions for options added in this session
+          //    - deletedOptions for options marked for deletion in this session
+          
+          // Update existing options in the database
+          for (const option of newOptions) {
+              await database.runAsync(
+                  "INSERT INTO extra_options (user_id, option) VALUES (?, ?)",
+                  [productId, option]
+              );
+          }
+
+          // Delete options marked for deletion from the database
+          for (const option of deletedOptions) {
+              await database.runAsync(
+                  "DELETE FROM extra_options WHERE user_id = ? AND option = ?",
+                  [productId, option]
+              );
+          }
+
+          });
+            
+
+            // message to alert user that product was updated and reset option management states
+            alert("Product updated!");
+            // reset option management states
+
+            //make sure to reset optionsData to reflect the current state of options after update
+            setDeletedOptions([]);
+            // After updating the database, we need to refresh optionsData to reflect the current state of options
+            setNewOptions([]);
+            // close out
+            onSuccess();
+        }catch (error) {
+            console.error("Error updating product:", error);
+        }
+    }
 
 
     // Boolean functions to check if an option is in a list
