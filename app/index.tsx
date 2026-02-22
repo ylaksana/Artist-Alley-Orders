@@ -8,6 +8,11 @@ import EnterInfoModal from '@/components/EnterInfoModal';
 import WarningModal from '@/components/WarningModal';
 import { useDatabaseContext } from './_layout';
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                           //
+//                                        THIS IS THE CORE DATABASE MANAGEMENT SYSTEM                                        //
+//                                                                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export interface DatabaseInfo {
   id: string;

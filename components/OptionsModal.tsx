@@ -20,6 +20,7 @@ export default function OptionsModal({isVisible, productId, onClose, onSuccess} 
         }
     }, [isVisible, productId]);
 
+    // this loads the options for the selected product from the database
     const loadOptions = async () => {
         try{
             console.log("Loading options for product ID:", productId);

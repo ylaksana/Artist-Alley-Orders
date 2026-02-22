@@ -13,6 +13,11 @@ import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useDatabaseContext } from "../_layout";
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                           //
+//                                  THIS IS THE MAIN SCREEN WHERE THE USER MAKES SALES                                       //
+//                                                                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export default function Index() {
     // Get database context
@@ -31,38 +36,6 @@ export default function Index() {
     const [sum, setSum] = useState<number>(0);
     const [editMode, setEditMode] = useState(false);
     const { selectedDatabase, clearSelectedDatabase } = useDatabaseContext();
-    
-    // // Guard: redirect if no database selected
-    // useEffect(() => {
-    //     if (!selectedDatabase) {
-    //         console.log('No database selected, redirecting...');
-    //         router.replace('../database-list');
-    //     }
-    // }, [selectedDatabase]);
-
-
-    // if (!selectedDatabase) {
-    //     return (
-    //         <View style={styles.container}>
-    //             <Text style={styles.title}>Loading...</Text>
-    //         </View>
-    //     );
-    // }
-
-    // useEffect(() => {
-    //   const updateOrdersTable = async () => {
-    //     try {
-    //       await database.runAsync(
-    //         `ALTER TABLE orders ADD COLUMN paymentType TEXT;`
-    //       )
-    //       console.log("Column paymentType added to orders table successfully.");
-    //     } catch (error) {
-    //       console.error("Error updating orders table:", error);
-    //     }
-    //   };
-
-    //   updateOrdersTable();
-    // }, [database]);
 
     // functions
     const headerLeft = () => {
@@ -148,7 +121,7 @@ export default function Index() {
       };
 
 
-
+      // this function is called when the form modal is submitted, it updates the customer information and sale type
       const changeOrderInformation = (name: string, phone: string, address: string, sale: string) => {
         setSale(sale);
         setName(name);
@@ -156,6 +129,7 @@ export default function Index() {
         setAddress(address);
       }
 
+      // this function clears the selected products and customer information 
       const clearCustomerInformation = () => {
         setSum(0);
         setSelectedProducts([]);
@@ -165,13 +139,18 @@ export default function Index() {
         setSale("Convention Sale");
         setPaymentType("Card");
       } 
-
+      
+      // this function loads the options for the selected product from the database when the options modal is opened
       const storeCustomerInformation = async() =>{
-        if (!selectedDatabase) {
+        // make sure the selected database exists
+        if (selectedDatabase == null) {
           console.warn('No database selected');
           return;
         }
+
+        // store the sales information in the ledger
         try{
+          // insert the order information into the orders table and get the inserted order ID
           const result = await database.runAsync(
             "INSERT INTO orders (type, name, email, price, phone, db_id, paymentType) VALUES(?, ?, ?, ?, ?, ?, ?)",
             [
@@ -184,29 +163,31 @@ export default function Index() {
               paymentType 
             ]
           );
-    
+          
+          // order ID
           const orderId = result.lastInsertRowId;
           
+          // insert each product in the order into the sold_products table with the order ID as a foreign key
           for (const product of selectedProducts) {
-            if (product.count > 0) {
-              try {
-                // Fixed SQL query with closing parenthesis
-                await database.runAsync(
-                  "INSERT INTO sold_products (user_id, product, count, db_id) VALUES(?, ?, ?, ?)",
-                  [
-                    orderId,
-                    product.name,
-                    product.count,
-                    selectedDatabase.id
-                  ]
-                );
-                console.log("Saved product:", product.name, "with count:", product.count);
-              } catch (productError) {
-                console.error("Error saving product:", productError, product);
-              }
+
+            // after storing the sales information, we store the products in that sale in another table
+            try {
+              await database.runAsync(
+                "INSERT INTO sold_products (user_id, product, count, db_id) VALUES(?, ?, ?, ?)",
+                [
+                  orderId,
+                  product.name,
+                  product.count,
+                  selectedDatabase.id
+                ]
+              );
+              console.log("Saved product:", product.name, "with count:", product.count);
+            } catch (productError) {
+              console.error("Error saving product:", productError, product);
             }
           }
           
+          // after storing the sales information, we clear the selected products and customer information for the next order
           clearCustomerInformation();
           
         } catch (error) {
@@ -215,7 +196,8 @@ export default function Index() {
           console.log(`Error saving order: ${error}, table info: ${JSON.stringify(tableInfo)}`);
         } 
       }
-    
+
+      // just calls the storeCustomerInformation function and shows an alert based on whether it was successful or not
       const storeOrder = () => {
         try{
           storeCustomerInformation();
@@ -225,7 +207,8 @@ export default function Index() {
           alert(`Error saving order: ${error}`);
         }
       }
-
+      
+      // button to switch conventions
       const switchConvention = () => {
         clearSelectedDatabase();
         router.back();

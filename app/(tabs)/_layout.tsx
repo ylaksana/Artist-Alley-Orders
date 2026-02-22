@@ -2,6 +2,12 @@ import { Tabs } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useDatabaseContext } from "../_layout";
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                           //
+//                                  THIS IS THE NAVIGATION WHERE THE USER CAN SWITCH BETWEEN SCREENS                         //
+//                                                                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 export default function TabsLayout() {
   const { selectedDatabase } = useDatabaseContext();
   return (
