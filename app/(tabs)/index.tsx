@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, ScrollView, Pressable} from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import { Stack, router} from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductType} from "@/types";
 
 import SelectProductModal from "@/components/SelectProductModal";
@@ -38,6 +38,22 @@ export default function Index() {
     const { selectedDatabase, clearSelectedDatabase } = useDatabaseContext();
 
     // functions
+
+    // useEffect(() => {
+    //   const updateOrdersTable = async () => {
+    //     try {
+    //       await database.runAsync(
+    //         `ALTER TABLE orders ADD COLUMN category TEXT;`
+    //       )
+    //       console.log("Column category added to orders table successfully.");
+    //     } catch (error) {
+    //       console.error("Error updating orders table:", error);
+    //     }
+    //   };
+
+    //   updateOrdersTable();
+    // }, [database]);
+
     const headerLeft = () => {
         return(
           <Pressable onPress={() => {

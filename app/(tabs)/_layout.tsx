@@ -42,6 +42,21 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
+            name="discounts"
+            options={{ 
+            title:"Discounts",
+            tabBarIcon: ({focused, color}) => (
+                <Ionicons 
+                    name={focused ? "pricetag" : "pricetag-outline"}
+                    color={color}
+                    size={24}
+                />
+            ),
+          }} 
+        />
+ 
+
+        <Tabs.Screen
             name="order-history"
             options={{ 
             title:"Order History",

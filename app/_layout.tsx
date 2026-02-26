@@ -5,6 +5,12 @@ import {SQLiteDatabase, SQLiteProvider} from 'expo-sqlite';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { View, Text, ActivityIndicator } from "react-native";
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                                           //
+//                                  THIS IS THE ROOT LAYOUT FILE WITH INLINE CONTEXT                                         //
+//                                                                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Database Context defined right here in the layout file
 interface DatabaseInfo {
   id: string;
@@ -69,17 +75,22 @@ export default function RootLayout() {
         );`
       );
       console.log("Databases table created successfully.");
+
+      // products table
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT,
           email TEXT,
           count INTEGER,
-          hasOptions INTEGER DEFAULT 0
+          hasOptions INTEGER DEFAULT 0,
+          categoryId INTEGER,
+          FOREIGN KEY (categoryId) REFERENCES categories(id)
         );`
       );
       console.log("Products table created successfully.");
-    
+
+      // sales info table
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,7 +105,8 @@ export default function RootLayout() {
           );`
         );
       console.log("Orders table created successfully.");
-
+      
+      // products sold within each sale
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS sold_products (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +120,7 @@ export default function RootLayout() {
       );
       console.log("Sold products table created successfully.");
 
+      // options for each product
       await db.execAsync(
         `CREATE TABLE IF NOT EXISTS extra_options (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,6 +130,17 @@ export default function RootLayout() {
         );`
       );
       console.log("Extra options table created successfully.");
+      
+      // categories for products
+      await db.execAsync(
+        `CREATE TABLE IF NOT EXISTS categories (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          name TEXT,
+          price_cut TEXT,
+          threshold INTEGER
+        );`
+      );
       setTimeout(() => setIsReady(true), 100);
 
       }
