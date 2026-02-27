@@ -7,7 +7,7 @@ import { SQLiteDatabase } from 'expo-sqlite';
 type Props = PropsWithChildren<{
   isVisible: boolean;
   onClose: () => void;
-  onSuccess: (cardAmount: string, cashAmount: string) => void;
+  onSuccess: (cardAmount?: string, cashAmount?: string) => void;
   customPayment?: boolean;
   sum?: number;
   database?: SQLiteDatabase
@@ -17,7 +17,7 @@ export default function WarningModal({isVisible, onSuccess, onClose, customPayme
     const [cashAmount, setCashAmount] = useState<string>("");
     const [cardAmount, setCardAmount] = useState<string>("");
     const [split, setSplit] = useState<boolean>(customPayment ? true : false);
-
+  
     useEffect(() => {
       if (isVisible) {
         setSplit(customPayment ? true : false);

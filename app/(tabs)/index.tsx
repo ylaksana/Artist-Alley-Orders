@@ -157,7 +157,7 @@ export default function Index() {
       } 
       
       // this function loads the options for the selected product from the database when the options modal is opened
-      const storeCustomerInformation = async(cardAmount: string, cashAmount: string) =>{
+      const storeCustomerInformation = async(cardAmount?: string, cashAmount?: string) =>{
         // make sure the selected database exists
         if (selectedDatabase == null) {
           console.warn('No database selected');
@@ -365,7 +365,7 @@ export default function Index() {
               sum = {paymentType === "Custom" ? sum : undefined}
               isVisible={warningModalVisible}
               onClose={() => setWarningModalVisible(false)}
-              onSuccess={(cardAmount: string, cashAmount: string) => {
+              onSuccess={(cardAmount?: string, cashAmount?: string) => {
                 storeCustomerInformation(cashAmount, cardAmount);
                 setWarningModalVisible(false);
               }}
