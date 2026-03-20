@@ -231,6 +231,23 @@ export default function Index() {
         router.back();
       }
 
+      // function to recalculate total sum after applying discounts
+      const recalculateSum = async () => {
+        // find the number of entries in discounts
+        const arrLength : number = (await database.getAllAsync("SELECT COUNT(*) AS count FROM discounts")).length;
+        // create array length of the number of entries in discounts
+        let categoryArr: number[] = new Array(arrLength).fill(0);
+        // count how many of each category is in the current order
+        for(const product of selectedProducts){
+          categoryArr[0] = product.id // CHANGE TO INTEGRATE CATEGORY NUMBERS
+        }
+        let newSum = 0
+        // cycle through the array and apply discounts if needed
+        for(const idx of categoryArr){
+          
+        }
+      }
+
     return (
         <View style={styles.container}>
             <Stack.Screen options={{headerLeft}}/>

@@ -85,7 +85,7 @@ export default function RootLayout() {
           count INTEGER,
           hasOptions INTEGER DEFAULT 0,
           categoryId INTEGER,
-          FOREIGN KEY (categoryId) REFERENCES categories(id)
+          FOREIGN KEY (categoryId) REFERENCES discounts(id)
         );`
       );
       console.log("Products table created successfully.");
@@ -133,9 +133,8 @@ export default function RootLayout() {
       
       // categories for products
       await db.execAsync(
-        `CREATE TABLE IF NOT EXISTS categories (
+        `CREATE TABLE IF NOT EXISTS discounts (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER,
           name TEXT,
           price_cut TEXT,
           threshold INTEGER

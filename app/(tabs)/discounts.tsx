@@ -23,7 +23,7 @@ export default function DiscountsScreen(){
       }
 
     // database
-    const database = useSQLiteContext();
+    const db = useSQLiteContext();
     const [warningModalVisible, setWarningModalVisible] = useState(false);
     // necessary info for discounts
     const [priceCut, setPriceCut] = useState<string>("0");
@@ -33,15 +33,64 @@ export default function DiscountsScreen(){
 
 
     const createDiscount = async () => {
-        // not implemented yet
+        // insert entry in discounts
+        try{
+            // atomic transaction
+            await db.withTransactionAsync(async() => {
+                const result = await db.runAsync(
+                    "INSERT INTO users (name, price_cut, threshold) VALUES(?, ?, ?)",
+                    [
+                        discountName,
+                        priceCut,
+                        threshold
+                    ]
+                );
+            });
+
+            alert("Discount successfully added!");
+        }
+        catch(error){
+            console.error("Error in inserting entry into discounts: ", error);
+        }
     }
 
-    const deleteDiscount = async () => {
-        // not implemented yet
+    const deleteDiscount = async (id: number) => {
+        // remove entry from discounts
+        try{
+            await db.withTransactionAsync(async() =>{
+                await db.runSync(
+                        "DELETE FROM discounts where id = ?",[id]
+                    );
+                }
+            );
+
+            alert("Successfully deleted entry from discounts");
+        }
+        catch(error){
+            console.error("Error removing entry from discounts: ", error);
+        }
     }
 
-    const updateDiscount = async () => {
-        // not implemented yet
+    const updateDiscount = async (id: number) => {
+        // update discount
+        try{
+            await db.withTransactionAsync(async() => {
+                await db.runAsync(
+                        "UPDATE discounts SET name = ?, price_cut = ?, threshold = ? where id = ?",
+                        [
+                           discountName,
+                           priceCut, 
+                           threshold
+                        ]
+                    );  
+                }
+            );
+
+            alert("Successfully updated entry!");
+        }
+        catch(error){
+            console.error("Error updating entry in discounts: ", error);
+        }
     }
 
 
