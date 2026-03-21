@@ -13,3 +13,10 @@ export const defaultProduct: ProductType = {
     count: 0,
     hasOptions: 0
 }
+
+export type DiscountType = {
+    discountId: number;
+    discountName: string;
+    discount: string;
+    threshold: string;
+}

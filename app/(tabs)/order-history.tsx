@@ -41,13 +41,13 @@ export default function OrderHistoryScreen() {
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [cash, setCash] = useState<string>("0");
     const [card, setCard] = useState<string>("0");
+    const limit = 10;
     
 
     useFocusEffect(
         useCallback(() => {
             if (selectedDatabase) {
                 goToPage(pageNumber);
-                checkSoldProducts();
             }
         }, [selectedDatabase, pageNumber])
     );
@@ -60,8 +60,7 @@ export default function OrderHistoryScreen() {
             return;
         }
         
-
-        const limit = 10;
+        // pagination logic: limit the number of orders fetched to 10 per page, and calculate the offset based on the current page number
         const offset = (page - 1) * limit;
         const query = `SELECT * FROM orders WHERE db_id = ? ORDER BY id DESC LIMIT ? OFFSET ?`;
         const params = [selectedDatabase.id, limit, offset];
@@ -71,17 +70,32 @@ export default function OrderHistoryScreen() {
             setData(result);
         }
         else{
-            if (page === 1) {
-                setData([]);
-            }
-            if (page > 1) {
-                setPageNumber(page - 1);
-            }
+            setData([]);
+            setPageNumber(page - 1);
         }
         
     };
 
+    const ordersExist = async (page: number) => {
+        if (!selectedDatabase) {
+            console.log("ordersExist: no selected database");
+            return false;
+        }
+
+        const offset = (page - 1) * limit;
+        const row = await database.getFirstAsync<{ total: number }>(
+            `SELECT COUNT(*) AS total FROM orders WHERE db_id = ?`,
+            [selectedDatabase.id]
+        );
+
+        const total = row?.total ?? 0;
+        const hasRowsOnPage = total > offset;
+        console.log(`ordersExist -> page=${page}, offset=${offset}, total=${total}, hasRowsOnPage=${hasRowsOnPage}`);
+        return hasRowsOnPage;
+    }
+
     const goToPage = (newPage: number) => {
+        // pageNumber will never be set to less than 1, and if the new page has no data, it will stay on the current page
         setPageNumber(newPage);
         loadData(newPage);
     };
@@ -97,17 +111,6 @@ export default function OrderHistoryScreen() {
         }
     }
     
-    const checkSoldProducts = async () => {
-        try {
-          const allProducts = await database.getAllAsync(
-            `SELECT * FROM sold_products`
-          );
-        //   console.log("All sold products:", allProducts);
-        } catch (error) {
-          console.error("Error checking sold products:", error);
-        }
-      };
-
     const openOrder = async (order: OrderType) => {
         try{
             const result = await database.getAllAsync<ProductItem>(`SELECT * FROM sold_products WHERE user_id = ?`, [order.id]);
@@ -185,6 +188,7 @@ export default function OrderHistoryScreen() {
             <View style={styles.pageNavigation}>
                 <View style={styles.button}>
                 <Pressable onPress={() => {
+                    // never decrements below 1
                     if (pageNumber > 1) {
                         goToPage(pageNumber - 1);
                     }
@@ -196,8 +200,14 @@ export default function OrderHistoryScreen() {
                 <Text style={styles.pageNumberText}>Page {pageNumber}</Text>
             </View>
             <View style={styles.button}>
-                <Pressable onPress={() => {
-                    goToPage(pageNumber + 1);
+                <Pressable onPress={async () => {
+                    const nextPage = pageNumber + 1;
+                    console.log(`Checking for orders on page ${nextPage}...`);
+                    const hasNextPage = await ordersExist(nextPage);
+                    console.log(`Next page exists: ${hasNextPage}`);
+                    if (hasNextPage) {
+                        goToPage(nextPage);
+                    }
                 }}>
                     <FontAwesome name="arrow-right" size={24} color="#000" />
                 </Pressable>

@@ -1,24 +1,31 @@
 // libraries
 import { Text, View, StyleSheet, ScrollView, Pressable, TextInput} from "react-native";
-import {useState} from "react";
-import { useSQLiteContext } from "expo-sqlite";
+import {useCallback, useState} from "react";
+import { useSQLiteContext, SQLiteDatabase  } from "expo-sqlite";
 import { Feather, Ionicons } from '@expo/vector-icons';
 
 // components
 import WarningModal from "@/components/WarningModal";  
-import { Stack } from "expo-router";
+import { Stack, useFocusEffect } from "expo-router";
+import { DiscountType } from "@/types";
+import { useDatabaseContext } from "../_layout";
 
 export default function DiscountsScreen(){
     // database
-    const db = useSQLiteContext();
+    const db = useSQLiteContext() as SQLiteDatabase;
+    const { selectedDatabase } = useDatabaseContext();;
     const [warningModalVisible, setWarningModalVisible] = useState(false);
+    // pagination for discount list
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const limit = 10;
     // necessary info for discounts
     const [priceCut, setPriceCut] = useState<string>("");
     const [discountName, setDiscountName] = useState<string>("");
     const [threshold, setThreshold] = useState<string>("");
-    const [list, setList] = useState<number[]>([1,2,3,4,5,6,7,8,9,10]);
+    const [discounts, setDiscounts] = useState<DiscountType[]>([]);
     const [discountCreateMode, setDiscountCreateMode] = useState<boolean>(false);
     const [discountEditMode, setDiscountEditMode] = useState<boolean>(false);
+    
 
     // top-left corner icon
     const headerLeft = () => {
@@ -42,7 +49,7 @@ export default function DiscountsScreen(){
             // SHOW BACK BUTTON IN EDIT MODE OR CREATE MODE, NAVIGATE BACK TO DISCOUNTS SCREEN ON PRESS
             (
             <Pressable onPress={() => {
-                // navigate to discount creation screen
+                // navigate to discount list screen
                 setDiscountCreateMode(false);
                 setDiscountEditMode(false);
                 }
@@ -53,7 +60,78 @@ export default function DiscountsScreen(){
             )
         );
     }
+    
+
+    
+    /// discount screen init ///
+    
+
+    // navigate to new page
+    const goToPage = async (newPage: number) => {
         
+        if (!selectedDatabase) {
+            return;
+        }
+
+        // load discounts for the page we are navigating to
+        setPageNumber(newPage);
+        loadDiscounts(newPage);
+    }
+
+    // load set number of discounts with offset and limit based on the current page number
+    const loadDiscounts = async (page: number) => {
+        try{
+            const limit = 10;
+            const offset = (page - 1) * limit;
+            const query = `SELECT * FROM discounts LIMIT ? OFFSET ?`;
+            const params = [limit, offset];
+            
+            
+            const results = await db.getAllAsync<DiscountType>(query, params);
+            
+            if (results.length > 0) {
+                setDiscounts(results);
+            }
+            else{
+                setDiscounts([]);
+                setPageNumber(page - 1);
+            }
+        }
+        catch(error){
+            console.error("Error loading discounts: ", error);
+        }
+    }
+
+    const nextPageExists = async (page: number) => {
+        if (!selectedDatabase) {
+            console.log("nextPageExists: no selected database");
+            return false;
+        }
+
+        const offset = (page - 1) * limit;
+        const row = await db.getFirstAsync<{ total: number }>(
+            `SELECT COUNT(*) AS total FROM discounts`,
+        );
+
+        const total = row?.total ?? 0;
+        const pageExists = total > offset;
+        console.log(`nextPageExists -> page=${page}, offset=${offset}, total=${total}, hasRowsOnPage=${pageExists}`);
+        return pageExists;
+    }
+
+
+     useFocusEffect(
+        useCallback(() => {
+            if (selectedDatabase) {
+                goToPage(pageNumber);
+            }
+        }, [selectedDatabase, pageNumber])
+    );
+
+
+
+
+
     // database functions for creating, updating, and deleting discounts
 
     // discount creation: simply insert the discount into the discounts table with the given info
@@ -133,10 +211,10 @@ export default function DiscountsScreen(){
                 // discount list page
                 (<ScrollView style={styles.scrollView}>
                     {/* This is where the list of discounts will be displayed */}
-                    {list.map((discount, index) => (
+                    {discounts.map((discount, index) => (
                         <View key={index} style={styles.cell}>
                         
-                            <Text style={styles.text}>{discount}</Text>
+                            <Text style={styles.text}>{discount.discountName}</Text>
                             <Pressable
                             onPress={() => {
                                 // navigate to discount editing screen
@@ -154,7 +232,40 @@ export default function DiscountsScreen(){
                 !discountCreateMode ?
 
                     // DISCOUNT EDITING MODE
-                    (<View style={styles.container}></View>)
+                    (<View style={styles.container}>
+                        <Text style={styles.titleText}>Edit discount</Text>
+                        <TextInput 
+                            style={[styles.textInput, {marginTop: 20}]} 
+                            placeholder="Discount Name" 
+                            placeholderTextColor="#fff"
+                            onChangeText={(text) => setDiscountName(text)}
+                            value={discountName}
+                        />
+                        <TextInput
+                            style = {styles.textInput}
+                            placeholder="Price Cut Amount"
+                            placeholderTextColor="#fff"
+                            keyboardType="numeric" 
+                            onChangeText={(text) => setPriceCut(text)}
+                            value={priceCut}
+                        />
+                        <TextInput
+                            style = {styles.textInput}
+                            placeholder="Number of units required for discount"
+                            placeholderTextColor="#fff"
+                            keyboardType="numeric"
+                            onChangeText={(text) => setThreshold(text)}
+                            value={threshold}
+                        />
+                         <Pressable
+                        style={styles.createButton}
+                        onPress={() => {
+                            // show warning modal before creating discount
+                            setWarningModalVisible(true);
+                        }}>
+                            <Text style={styles.buttonText}>Update Discount</Text>
+                        </Pressable>
+                    </View>)
                     
                     : 
                     
