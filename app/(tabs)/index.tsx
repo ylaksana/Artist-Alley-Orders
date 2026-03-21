@@ -39,21 +39,6 @@ export default function Index() {
 
     // functions
 
-    // useEffect(() => {
-    //   const updateOrdersTable = async () => {
-    //     try {
-    //       await database.runAsync(
-    //         `ALTER TABLE orders ADD COLUMN category TEXT;`
-    //       )
-    //       console.log("Column category added to orders table successfully.");
-    //     } catch (error) {
-    //       console.error("Error updating orders table:", error);
-    //     }
-    //   };
-
-    //   updateOrdersTable();
-    // }, [database]);
-
     const headerLeft = () => {
         return(
           <Pressable onPress={() => {

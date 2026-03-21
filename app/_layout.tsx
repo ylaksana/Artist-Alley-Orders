@@ -140,6 +140,7 @@ export default function RootLayout() {
           threshold INTEGER
         );`
       );
+      console.log("Discounts table created successfully.");
       setTimeout(() => setIsReady(true), 100);
 
       }

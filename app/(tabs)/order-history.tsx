@@ -176,7 +176,11 @@ export default function OrderHistoryScreen() {
                 />
             )}
             
-            {data.length === 0 && (<Text style={styles.text}>No Sales Yet!</Text>)}
+            {data.length === 0 && (
+                <View style={styles.titleContainer}>
+                    <Text style={styles.titleText}>No Sales Yet!</Text>
+                </View>
+            )}
             
             <View style={styles.pageNavigation}>
                 <View style={styles.button}>
@@ -210,6 +214,19 @@ const styles=StyleSheet.create({
     container:{
         flex: 1,
         backgroundColor: '#25292e',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    titleText:{
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        
+        color: '#fff',
+    },
+    titleContainer:{
+        flex: 1,
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
     },
