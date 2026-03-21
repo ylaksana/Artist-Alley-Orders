@@ -23,9 +23,12 @@ export default function DiscountsScreen(){
     // top-left corner icon
     const headerLeft = () => {
         return(
+
+            // if we aren't in either edit or create mode, show the plus icon to navigate to the discount creation screen, 
+            // otherwise show the back arrow to navigate back to the discount list screen
             !discountCreateMode && !discountEditMode ? 
             
-            // SHOW PLUS ICON WHEN NOT IN EDIT MODE, NAVIGATE TO DISCOUNT CREATION SCREEN
+            // SHOW PLUS ICON WHEN NOT IN EDIT MODE OR CREATE MODE, NAVIGATE TO DISCOUNT CREATION SCREEN
             (<Pressable onPress={() => {
                 // navigate to discount creation screen
                 setDiscountCreateMode(true);
@@ -36,7 +39,7 @@ export default function DiscountsScreen(){
                 <Feather name="plus" size={24} color="#ffd33d"/>
             </Pressable>
             ) :
-            // SHOW BACK BUTTON IN EDIT MODE, NAVIGATE BACK TO DISCOUNTS SCREEN ON PRESS
+            // SHOW BACK BUTTON IN EDIT MODE OR CREATE MODE, NAVIGATE BACK TO DISCOUNTS SCREEN ON PRESS
             (
             <Pressable onPress={() => {
                 // navigate to discount creation screen
