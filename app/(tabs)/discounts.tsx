@@ -17,17 +17,19 @@ export default function DiscountsScreen(){
     const [discountName, setDiscountName] = useState<string>("");
     const [threshold, setThreshold] = useState<string>("");
     const [list, setList] = useState<number[]>([1,2,3,4,5,6,7,8,9,10]);
+    const [discountCreateMode, setDiscountCreateMode] = useState<boolean>(false);
     const [discountEditMode, setDiscountEditMode] = useState<boolean>(false);
 
     // top-left corner icon
     const headerLeft = () => {
         return(
-            !discountEditMode ? 
+            !discountCreateMode && !discountEditMode ? 
             
             // SHOW PLUS ICON WHEN NOT IN EDIT MODE, NAVIGATE TO DISCOUNT CREATION SCREEN
             (<Pressable onPress={() => {
                 // navigate to discount creation screen
-                setDiscountEditMode(true);
+                setDiscountCreateMode(true);
+                setDiscountEditMode(false);
                 }
             } 
             style={{marginLeft: 5, padding: 10}}>
@@ -38,6 +40,7 @@ export default function DiscountsScreen(){
             (
             <Pressable onPress={() => {
                 // navigate to discount creation screen
+                setDiscountCreateMode(false);
                 setDiscountEditMode(false);
                 }
             } 
@@ -123,7 +126,7 @@ export default function DiscountsScreen(){
             <Stack.Screen options={{headerLeft}}/>
 
         {/*Change the view based on whether we are editing or creating a discount*/}
-            {!discountEditMode ? 
+            {!discountCreateMode && !discountEditMode ? 
                 // discount list page
                 (<ScrollView style={styles.scrollView}>
                     {/* This is where the list of discounts will be displayed */}
@@ -134,6 +137,8 @@ export default function DiscountsScreen(){
                             <Pressable
                             onPress={() => {
                                 // navigate to discount editing screen
+                                setDiscountEditMode(true);
+                                console.log(discountEditMode);
                             }}>
                                 <Ionicons name="ellipsis-vertical" size={17} color='#ffd33d'/>
                             </Pressable>
@@ -143,40 +148,48 @@ export default function DiscountsScreen(){
                 </ScrollView>) 
                 : 
                 // discount creation page
-                (<View style={styles.container}>
-                    <Text style={styles.titleText}>Create a new discount</Text>
-                    <TextInput 
-                        style={[styles.textInput, {marginTop: 20}]} 
-                        placeholder="Discount Name" 
-                        placeholderTextColor="#fff"
-                        onChangeText={(text) => setDiscountName(text)}
-                        value={discountName}
-                    />
-                    <TextInput
-                        style = {styles.textInput}
-                        placeholder="Price Cut Amount"
-                        placeholderTextColor="#fff"
-                        keyboardType="numeric" 
-                        onChangeText={(text) => setPriceCut(text)}
-                        value={priceCut}
-                    />
-                    <TextInput
-                        style = {styles.textInput}
-                        placeholder="Number of units required for discount"
-                        placeholderTextColor="#fff"
-                        keyboardType="numeric"
-                        onChangeText={(text) => setThreshold(text)}
-                        value={threshold}
-                    />
-                    <Pressable
-                    style={styles.createButton}
-                    onPress={() => {
-                        // show warning modal before creating discount
-                        setWarningModalVisible(true);
-                    }}>
-                        <Text style={styles.buttonText}>Create Discount</Text>
-                    </Pressable>
-                </View>)
+                !discountCreateMode ?
+
+                    // DISCOUNT EDITING MODE
+                    (<View style={styles.container}></View>)
+                    
+                    : 
+                    
+                    // DISCOUNT CREATION MODE
+                    (<View style={styles.container}>
+                        <Text style={styles.titleText}>Create a new discount</Text>
+                        <TextInput 
+                            style={[styles.textInput, {marginTop: 20}]} 
+                            placeholder="Discount Name" 
+                            placeholderTextColor="#fff"
+                            onChangeText={(text) => setDiscountName(text)}
+                            value={discountName}
+                        />
+                        <TextInput
+                            style = {styles.textInput}
+                            placeholder="Price Cut Amount"
+                            placeholderTextColor="#fff"
+                            keyboardType="numeric" 
+                            onChangeText={(text) => setPriceCut(text)}
+                            value={priceCut}
+                        />
+                        <TextInput
+                            style = {styles.textInput}
+                            placeholder="Number of units required for discount"
+                            placeholderTextColor="#fff"
+                            keyboardType="numeric"
+                            onChangeText={(text) => setThreshold(text)}
+                            value={threshold}
+                        />
+                        <Pressable
+                        style={styles.createButton}
+                        onPress={() => {
+                            // show warning modal before creating discount
+                            setWarningModalVisible(true);
+                        }}>
+                            <Text style={styles.buttonText}>Create Discount</Text>
+                        </Pressable>
+                    </View>)
             }
             
 
@@ -189,8 +202,11 @@ export default function DiscountsScreen(){
                 isVisible={warningModalVisible}
                 onClose={() => setWarningModalVisible(false)}
                 onSuccess={() => {
-                    createDiscount()
+                    createDiscount();
                     setWarningModalVisible(false);
+                    setDiscountName("");
+                    setPriceCut("");
+                    setThreshold("");
                 }}
             />
         </View>
