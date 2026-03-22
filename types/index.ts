@@ -15,8 +15,8 @@ export const defaultProduct: ProductType = {
 }
 
 export type DiscountType = {
-    discountId: number;
-    discountName: string;
-    discount: string;
+    id: number;
+    name: string;
+    price_cut: string;
     threshold: string;
 }

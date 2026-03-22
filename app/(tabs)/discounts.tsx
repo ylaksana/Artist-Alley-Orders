@@ -25,6 +25,7 @@ export default function DiscountsScreen(){
     const [discounts, setDiscounts] = useState<DiscountType[]>([]);
     const [discountCreateMode, setDiscountCreateMode] = useState<boolean>(false);
     const [discountEditMode, setDiscountEditMode] = useState<boolean>(false);
+    const [currentDiscount, setCurrentDiscount] = useState<DiscountType | null>(null);
     
 
     // top-left corner icon
@@ -93,8 +94,11 @@ export default function DiscountsScreen(){
                 setDiscounts(results);
             }
             else{
-                setDiscounts([]);
-                setPageNumber(page - 1);
+                 setDiscounts([]);
+                // Only decrement if we're not already on page 1
+                if (page > 1) {
+                    setPageNumber(page - 1);
+                }
             }
         }
         catch(error){
@@ -119,11 +123,28 @@ export default function DiscountsScreen(){
         return pageExists;
     }
 
+    const discountExists = async (name: string) => {
+    if (!selectedDatabase) {
+        console.log("discountExists: no selected database");
+        return false;
+    }
+    
+    // check if there are any discounts with the same name in the database
+    const result = await db.getFirstAsync<{ count: number }>(
+        `SELECT COUNT(*) AS count FROM discounts WHERE name = ?`,
+        [name]
+    );
+
+    return (result?.count ?? 0) > 0;
+}
+
 
      useFocusEffect(
         useCallback(() => {
             if (selectedDatabase) {
+                console.log("useFocusEffect triggered - selectedDatabase:", selectedDatabase, "pageNumber:", pageNumber);
                 goToPage(pageNumber);
+                console.log(discounts);
             }
         }, [selectedDatabase, pageNumber])
     );
@@ -138,10 +159,14 @@ export default function DiscountsScreen(){
     const createDiscount = async () => {
         // insert entry in discounts
         try{
+            if (await discountExists(discountName)){
+                alert("Discount with this name already exists!");
+                return;
+            }
             // atomic transaction
             await db.withTransactionAsync(async() => {
                 await db.runAsync(
-                    "INSERT INTO users (name, price_cut, threshold) VALUES(?, ?, ?)",
+                    "INSERT INTO discounts (name, price_cut, threshold) VALUES(?, ?, ?)",
                     [
                         discountName,
                         priceCut,
@@ -149,8 +174,9 @@ export default function DiscountsScreen(){
                     ]
                 );
             });
-
+            
             alert("Discount successfully added!");
+            loadDiscounts(pageNumber);
         }
         catch(error){
             console.error("Error in inserting entry into discounts: ", error);
@@ -158,8 +184,12 @@ export default function DiscountsScreen(){
     }
 
     // discount deletion: simply delete the discount from the discounts table with the given id
-    const deleteDiscount = async (id: number) => {
+    const deleteDiscount = async (id?: number | null) => {
         // remove entry from discounts
+        if (!id) {
+            console.error("deleteDiscount: no id provided");
+            return;
+        }
         try{
             // delete the discount with given id
             await db.withTransactionAsync(async() =>{
@@ -170,6 +200,7 @@ export default function DiscountsScreen(){
             );
 
             alert("Successfully deleted entry from discounts");
+            loadDiscounts(pageNumber);
         }
         catch(error){
             console.error("Error removing entry from discounts: ", error);
@@ -214,12 +245,16 @@ export default function DiscountsScreen(){
                     {discounts.map((discount, index) => (
                         <View key={index} style={styles.cell}>
                         
-                            <Text style={styles.text}>{discount.discountName}</Text>
+                            <Text style={styles.text}>{discount.name}</Text>
                             <Pressable
                             onPress={() => {
-                                // navigate to discount editing screen
+                                // navigate to discount editing screen\
+                                console.log("Selected discount for editing: ", discount);
                                 setDiscountEditMode(true);
-                                console.log(discountEditMode);
+                                setCurrentDiscount(discount);
+                                setDiscountName(discount.name);
+                                setPriceCut(discount.price_cut.toString());
+                                setThreshold(discount.threshold.toString());
                             }}>
                                 <Ionicons name="ellipsis-vertical" size={17} color='#ffd33d'/>
                             </Pressable>
@@ -257,6 +292,7 @@ export default function DiscountsScreen(){
                             onChangeText={(text) => setThreshold(text)}
                             value={threshold}
                         />
+                        {/*Update Discount Button */}
                          <Pressable
                         style={styles.createButton}
                         onPress={() => {
@@ -264,6 +300,16 @@ export default function DiscountsScreen(){
                             setWarningModalVisible(true);
                         }}>
                             <Text style={styles.buttonText}>Update Discount</Text>
+                        </Pressable>
+
+                        {/* Delete Discount Button */}
+                        <Pressable
+                        style={styles.createButton}
+                        onPress={() => {
+                            // show warning modal before creating discount
+                            setWarningModalVisible(true);
+                        }}>
+                            <Text style={styles.buttonText}>Delete Discount</Text>
                         </Pressable>
                     </View>)
                     
@@ -316,7 +362,14 @@ export default function DiscountsScreen(){
                 isVisible={warningModalVisible}
                 onClose={() => setWarningModalVisible(false)}
                 onSuccess={() => {
-                    createDiscount();
+                    if (discountCreateMode) {
+                        createDiscount();
+                        setDiscountCreateMode(false);
+                    }
+                    else{
+                        deleteDiscount(currentDiscount?.id);
+                        setDiscountEditMode(false);
+                    }
                     setWarningModalVisible(false);
                     setDiscountName("");
                     setPriceCut("");
