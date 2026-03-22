@@ -25,6 +25,7 @@ export default function DiscountsScreen(){
     const [discounts, setDiscounts] = useState<DiscountType[]>([]);
     const [discountCreateMode, setDiscountCreateMode] = useState<boolean>(false);
     const [discountEditMode, setDiscountEditMode] = useState<boolean>(false);
+    const [updateFlag, setUpdateFlag] = useState<boolean>(false);
     const [currentDiscount, setCurrentDiscount] = useState<DiscountType | null>(null);
     
 
@@ -53,6 +54,9 @@ export default function DiscountsScreen(){
                 // navigate to discount list screen
                 setDiscountCreateMode(false);
                 setDiscountEditMode(false);
+                setDiscountName("");
+                setPriceCut("");
+                setThreshold("");
                 }
             } 
             style={{marginLeft: 5, padding: 10}}>
@@ -123,7 +127,7 @@ export default function DiscountsScreen(){
         return pageExists;
     }
 
-    const discountExists = async (name: string) => {
+    const discountExists = async (name: string, excludeId?: number) => {
     if (!selectedDatabase) {
         console.log("discountExists: no selected database");
         return false;
@@ -131,8 +135,10 @@ export default function DiscountsScreen(){
     
     // check if there are any discounts with the same name in the database
     const result = await db.getFirstAsync<{ count: number }>(
-        `SELECT COUNT(*) AS count FROM discounts WHERE name = ?`,
-        [name]
+        excludeId
+            ? `SELECT COUNT(*) AS count FROM discounts WHERE name = ? AND id != ?`
+            : `SELECT COUNT(*) AS count FROM discounts WHERE name = ?`,
+        excludeId ? [name, excludeId] : [name]
     );
 
     return (result?.count ?? 0) > 0;
@@ -159,10 +165,6 @@ export default function DiscountsScreen(){
     const createDiscount = async () => {
         // insert entry in discounts
         try{
-            if (await discountExists(discountName)){
-                alert("Discount with this name already exists!");
-                return;
-            }
             // atomic transaction
             await db.withTransactionAsync(async() => {
                 await db.runAsync(
@@ -175,8 +177,8 @@ export default function DiscountsScreen(){
                 );
             });
             
-            alert("Discount successfully added!");
             loadDiscounts(pageNumber);
+            alert("Discount successfully added!");
         }
         catch(error){
             console.error("Error in inserting entry into discounts: ", error);
@@ -199,8 +201,8 @@ export default function DiscountsScreen(){
                 }
             );
 
-            alert("Successfully deleted entry from discounts");
             loadDiscounts(pageNumber);
+            alert("Successfully deleted entry from discounts");
         }
         catch(error){
             console.error("Error removing entry from discounts: ", error);
@@ -211,18 +213,25 @@ export default function DiscountsScreen(){
     const updateDiscount = async (id: number) => {
         // update discount
         try{
+            if (await discountExists(discountName, id)){
+                alert("Discount with this name already exists!");
+                return;
+            }
             await db.withTransactionAsync(async() => {
                 await db.runAsync(
                         "UPDATE discounts SET name = ?, price_cut = ?, threshold = ? where id = ?",
                         [
                            discountName,
                            priceCut, 
-                           threshold
+                           threshold,
+                           id
                         ]
                     );  
                 }
             );
 
+            
+            loadDiscounts(pageNumber);
             alert("Successfully updated entry!");
         }
         catch(error){
@@ -245,7 +254,7 @@ export default function DiscountsScreen(){
                     {discounts.map((discount, index) => (
                         <View key={index} style={styles.cell}>
                         
-                            <Text style={styles.text}>{discount.name}</Text>
+                            <Text style={styles.cellText}>{discount.name}</Text>
                             <Pressable
                             onPress={() => {
                                 // navigate to discount editing screen\
@@ -269,35 +278,42 @@ export default function DiscountsScreen(){
                     // DISCOUNT EDITING MODE
                     (<View style={styles.container}>
                         <Text style={styles.titleText}>Edit discount</Text>
-                        <TextInput 
-                            style={[styles.textInput, {marginTop: 20}]} 
-                            placeholder="Discount Name" 
-                            placeholderTextColor="#fff"
-                            onChangeText={(text) => setDiscountName(text)}
-                            value={discountName}
-                        />
-                        <TextInput
-                            style = {styles.textInput}
-                            placeholder="Price Cut Amount"
-                            placeholderTextColor="#fff"
-                            keyboardType="numeric" 
-                            onChangeText={(text) => setPriceCut(text)}
-                            value={priceCut}
-                        />
-                        <TextInput
-                            style = {styles.textInput}
-                            placeholder="Number of units required for discount"
-                            placeholderTextColor="#fff"
-                            keyboardType="numeric"
-                            onChangeText={(text) => setThreshold(text)}
-                            value={threshold}
-                        />
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Discount Name</Text>
+                            <TextInput 
+                                style={styles.textInput} 
+                                placeholderTextColor="#fff"
+                                onChangeText={(text) => setDiscountName(text)}
+                                value={discountName}
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Price Cut</Text>
+                            <TextInput
+                                style = {styles.textInput}
+                                placeholderTextColor="#fff"
+                                keyboardType="numeric" 
+                                onChangeText={(text) => setPriceCut(text)}
+                                value={priceCut}
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Number of Units Needed for Discount</Text>
+                            <TextInput
+                                style = {styles.textInput}
+                                placeholderTextColor="#fff"
+                                keyboardType="numeric"
+                                onChangeText={(text) => setThreshold(text)}
+                                value={threshold}
+                            />
+                        </View>
                         {/*Update Discount Button */}
                          <Pressable
                         style={styles.createButton}
                         onPress={() => {
                             // show warning modal before creating discount
                             setWarningModalVisible(true);
+                            setUpdateFlag(true);
                         }}>
                             <Text style={styles.buttonText}>Update Discount</Text>
                         </Pressable>
@@ -318,34 +334,51 @@ export default function DiscountsScreen(){
                     // DISCOUNT CREATION MODE
                     (<View style={styles.container}>
                         <Text style={styles.titleText}>Create a new discount</Text>
-                        <TextInput 
-                            style={[styles.textInput, {marginTop: 20}]} 
-                            placeholder="Discount Name" 
-                            placeholderTextColor="#fff"
-                            onChangeText={(text) => setDiscountName(text)}
-                            value={discountName}
-                        />
-                        <TextInput
-                            style = {styles.textInput}
-                            placeholder="Price Cut Amount"
-                            placeholderTextColor="#fff"
-                            keyboardType="numeric" 
-                            onChangeText={(text) => setPriceCut(text)}
-                            value={priceCut}
-                        />
-                        <TextInput
-                            style = {styles.textInput}
-                            placeholder="Number of units required for discount"
-                            placeholderTextColor="#fff"
-                            keyboardType="numeric"
-                            onChangeText={(text) => setThreshold(text)}
-                            value={threshold}
-                        />
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Discount Name</Text>
+                            <TextInput 
+                                style={styles.createTextInput} 
+                                placeholderTextColor="#fff"
+                                onChangeText={(text) => setDiscountName(text)}
+                                value={discountName}
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Price Cut</Text>
+                            <TextInput
+                                style = {styles.createTextInput}
+                                placeholderTextColor="#fff"
+                                keyboardType="numeric" 
+                                onChangeText={(text) => setPriceCut(text)}
+                                value={priceCut}
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.text}>Number of Units Needed for Discount</Text>
+                            <TextInput
+                                style = {styles.createTextInput}
+                                placeholderTextColor="#fff"
+                                keyboardType="numeric"
+                                onChangeText={(text) => setThreshold(text)}
+                                value={threshold}
+                            />
+                        </View>
+            
                         <Pressable
                         style={styles.createButton}
-                        onPress={() => {
+                        onPress={async () => {
                             // show warning modal before creating discount
-                            setWarningModalVisible(true);
+                            if(await discountExists(discountName)){
+                                alert("Discount with this name already exists!");
+                                return;
+                            }
+                            if(!discountName || !priceCut || !threshold){
+                                alert("Please fill in all fields!");
+                                return;
+                            }
+                            else{
+                                setWarningModalVisible(true);
+                            }
                         }}>
                             <Text style={styles.buttonText}>Create Discount</Text>
                         </Pressable>
@@ -361,13 +394,25 @@ export default function DiscountsScreen(){
             <WarningModal
                 isVisible={warningModalVisible}
                 onClose={() => setWarningModalVisible(false)}
-                onSuccess={() => {
+                onSuccess={async () => {
+                    if (!currentDiscount){
+                        console.error("No current discount selected for update or delete operation");
+                        return;
+                    }
+                    // create mode block
                     if (discountCreateMode) {
                         createDiscount();
                         setDiscountCreateMode(false);
                     }
-                    else{
-                        deleteDiscount(currentDiscount?.id);
+                    // edit mode block
+                    else{ 
+                        if (updateFlag){
+                            updateDiscount(currentDiscount.id);
+                            setUpdateFlag(false);
+                        }
+                        else{
+                            deleteDiscount(currentDiscount.id);
+                        }
                         setDiscountEditMode(false);
                     }
                     setWarningModalVisible(false);
@@ -392,10 +437,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
     },
+    inputContainer:{
+        backgroundColor: '#25292e',
+        width: '80%',
+    },
     text:{
         color: '#fff',
-        fontSize: 20,
+        fontSize: 15,
         fontWeight: 'bold',
+        marginVertical: 10,
     },
     titleText:{
         fontSize: 20,
@@ -420,16 +470,30 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#525961',
     },
+    cellText:{
+        color: '#fff',
+        fontSize: 20,
+    },
     textInput:{
         height: 40,
-        width: '80%',
         borderColor: '#fff',
         borderWidth: 1,
         borderRadius: 5,
         paddingHorizontal: 10,
-        marginVertical: 10,
+        marginBottom: 10,
         color: '#fff', // Text color
         backgroundColor: '#333', // Background color for the text box
+    },
+    createTextInput:{
+        height: 40,
+        width: '100%',
+        borderColor: '#fff',
+        borderWidth: 1,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        marginBottom: 10,
+        color: '#fff',
+        backgroundColor: '#333',
     },
     createButton:{
         backgroundColor: '#ffd33d',
