@@ -2,6 +2,7 @@ import {Modal, View, Text, Pressable, StyleSheet, TextInput, ScrollView} from 'r
 import { PropsWithChildren, useRef } from 'react';
 import { useState, useEffect } from 'react';
 import { SQLiteDatabase } from 'expo-sqlite';
+import { Picker } from '@react-native-picker/picker';
 
 // Modal component for adding/editing products, including managing extra options
 type Props = PropsWithChildren<{
@@ -28,12 +29,11 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const previousOptions = useRef<Set<string>>(new Set()); // Backup of original options fetched from database to manage option updates and cancellations
     const changesExists = optionsData.length !== previousOptions.current.size || optionsData.some(option => !previousOptions.current.has(option));
-
-    // Recent Changes
     // Flag to indicate whether to submit new product
     let submitFlag = false;
-    // Product category types for selection
-    const categoryTypes = ["Vocaloid Keychain", "Sticker", "Regular Pin", "Small Pin", "Sanrio/Chiikawa Pins", "Shirt", "Other"];
+    // Product category type
+    const [categoryId, setCategoryId] = useState<number | null>(null);
+    const testList = [1,2,3,4,5];
 
     
 // Load product data and options when modal becomes visible or when productId changes
@@ -364,6 +364,20 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                     onChangeText={(text) => setPrice(text)}
                   ></TextInput>
 
+                  {/* Discount Dropdown */}
+                  <View style={styles.discountContainer}>
+                    <Picker
+                      selectedValue={categoryId}
+                      onValueChange={(itemValue) => setCategoryId(itemValue)}
+                      style={styles.discountDropdown}
+                    >
+                      {testList.map((item) => (
+                        <Picker.Item key={item} label={`Category ${item}`} value={item} />
+                      ))}
+                    </Picker>
+                  </View>
+                  
+
                   {/* Extra Options Button */}
                    <Pressable
                     style={styles.productModalButton}
@@ -462,28 +476,6 @@ export default function AddProductModal({isVisible, onSuccess, onClose, productI
                   
                 </View>
               )}
-
-              {/*NEW VIEW FOR SELECTING THE PRODUCT TYPE UPON CREATION*/}
-              {/*MUST ADD A PRODUCT FOR THE FIRST TIME*/}
-
-              {/* Select item category */}
-              {submitFlag && productId == null && 
-                (<View>
-                    <Text>What kind of product is this?</Text>
-                    {/* Buttons for selecting product type */}
-                    <ScrollView style={styles.scrollView}>
-                      {categoryTypes.map((category, index) => (
-                        <Pressable
-                          key={index}
-                          style={styles.productModalButton}
-                        >
-                          <Text style={{color: '#000'}}>{category}</Text>
-                        </Pressable>
-                      ))}
-                      
-                    </ScrollView>
-                </View>)}
-            
             </View>
 
             
@@ -571,4 +563,18 @@ const styles = StyleSheet.create({
         width: '100%',
         flex:1,
       },
+      discountContainer: {
+        height: 40,
+        width: "80%",
+        borderColor: "#fff",
+        borderWidth: 1,
+        borderRadius: 5,
+        backgroundColor: "#333",
+        justifyContent: "center",
+        marginVertical: 10
+      },
+      discountDropdown: {
+        width: '100%',
+        color: '#fff', // Text color
+      }
 });
